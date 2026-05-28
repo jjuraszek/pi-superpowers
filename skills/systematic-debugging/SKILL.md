@@ -148,4 +148,4 @@ Read directly when needed: `reference/rationalizations.md` and the supporting `*
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Sections matching this skill's name override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
