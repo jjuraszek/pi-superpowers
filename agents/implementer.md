@@ -2,8 +2,10 @@
 name: implementer
 description: Strict TDD implementation. Writes a failing test, then makes it pass, then refactors. Verifies with real test runs before claiming done.
 tools: read, write, edit, bash, grep, find, ls
+thinking: medium
+defaultContext: fork
 inheritProjectContext: true
-inheritSkills: true
+inheritSkills: false
 systemPromptMode: replace
 completionGuard: true
 defaultProgress: true

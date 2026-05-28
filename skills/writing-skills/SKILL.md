@@ -21,16 +21,17 @@ Write a pressure scenario for a subagent, watch it fail (baseline), write the sk
 
 ## Where Skills Live in Pi
 
-Pi discovers skills from two roots:
+Pi discovers skills from multiple roots (see `docs/skills.md` in `@earendil-works/pi-coding-agent` for the full list). The common ones:
 
-| Path | Scope | Source |
+| Path | Scope | Typical Use |
 |---|---|---|
-| `.pi/skills/<name>/SKILL.md` | Project, pi-only | Workflow methodology, adapted from `obra/superpowers` |
-| `.agents/skills/<name>/SKILL.md` (any ancestor) | Cross-harness | Gridstrong-specific (linear, ship, slack, …) |
-| `~/.pi/...` | User-global | Personal skills |
-| `~/.agents/skills/<name>/SKILL.md` | User-global, cross-harness | Personal skills |
+| `.pi/skills/<name>/SKILL.md` | Project, pi-only | Workflow methodology authored in-repo |
+| `.agents/skills/<name>/SKILL.md` (any ancestor) | Cross-harness, project | Skills shared with Claude Code, Codex, etc. |
+| `~/.pi/agent/skills/<name>/SKILL.md` | User-global, pi-only | Personal skills |
+| `~/.agents/skills/<name>/SKILL.md` | User-global, cross-harness | Personal skills shared with other harnesses |
+| Installed packages (`skills/` dir, `pi.skills` in `package.json`) | Package-scoped | Reusable skill libraries like `pi-superpowers` |
 
-Each `.pi/skills/<name>/` directory contains:
+Each skill directory contains:
 ```
 SKILL.md              # required entry point
 reference/            # optional progressive-disclosure files
@@ -62,7 +63,7 @@ Read directly when SKILL.md tells you to (path is given inline). The progressive
 - One-off solutions
 - Standard practices documented elsewhere
 - Project-specific conventions (use `AGENTS.md` or a service-level `doc/`)
-- Mechanically enforceable rules at ship time (use `.pi/extensions/verify-before-ship` — runtime enforcement beats documentation). Note: only ship-command verification is mechanised today; TDD, debug, and phase enforcement are skill-only.
+- Mechanically enforceable rules at ship time (use the `verify-before-ship` extension from `pi-superpowers` — runtime enforcement beats documentation). Note: only ship-command verification is mechanised today; TDD, debug, and phase enforcement are skill-only.
 
 ## SKILL.md Structure
 
@@ -177,10 +178,10 @@ If a skill leans on pi capabilities, name them explicitly:
 
 | Capability | How to reference it |
 |---|---|
-| Plan/phase persistence | `plan_tracker` tool (provided by `.pi/extensions/plan-tracker.ts`) |
+| Plan/phase persistence | `plan_tracker` tool (provided by the `pi-superpowers` package's `plan-tracker` extension) |
 | Progressive disclosure | Direct `read` of `reference/<topic>.md` paths named inline in SKILL.md |
-| Runtime enforcement | `.pi/extensions/verify-before-ship` (advisory warning before `git commit` / `git push` / `gh pr create` when no canonical verification command has succeeded since the last source edit) |
-| Subagent dispatch | `subagent` tool from `npm:pi-subagents`; project subagents are `implementer`, `code-reviewer`, `spec-reviewer`, `grid-compliance-expert` |
+| Runtime enforcement | `verify-before-ship` extension from `pi-superpowers` (advisory warning before `git commit` / `git push` / `gh pr create` when no canonical verification command has succeeded since the last source edit) |
+| Subagent dispatch | `subagent` tool from `pi-subagents`; baseline subagents from `pi-superpowers` are `implementer`, `code-reviewer`, `spec-reviewer`. Consumer repos can add project-specific subagents under `.pi/agents/`. |
 
 Don't invent capabilities. Don't reference Claude Code's `Task` tool, OpenCode hooks, or Codex `spawn_agent` unless the skill is explicitly for that harness.
 

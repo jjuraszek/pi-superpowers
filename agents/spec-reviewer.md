@@ -2,8 +2,10 @@
 name: spec-reviewer
 description: Independently verifies an implementation against its spec/plan. Trusts the artifacts, not the implementer's self-report.
 tools: read, grep, find, ls, bash
+thinking: high
+defaultContext: fresh
 inheritProjectContext: true
-inheritSkills: true
+inheritSkills: false
 systemPromptMode: replace
 completionGuard: false
 ---
