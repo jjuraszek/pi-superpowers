@@ -20,20 +20,25 @@ Git worktrees create isolated workspaces sharing the same repository, allowing w
 Before doing anything else, check whether you are **already** inside an isolated worktree. Creating a worktree inside another worktree, or inside a submodule, produces silent corruption.
 
 ```bash
-GIT_DIR=$(git rev-parse --git-dir)
-GIT_COMMON=$(git rev-parse --git-common-dir)
-
-if [ "$GIT_DIR" != "$GIT_COMMON" ]; then
-  echo "Already in a worktree: $(pwd)"
-  echo "Common git dir: $GIT_COMMON"
-  echo "Do not create a nested worktree. Continue here or ask the user."
-  # STOP — do not create another worktree
-fi
+GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
+GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
+BRANCH=$(git branch --show-current)
 ```
 
-**Submodule guard:** if `.git` is a *file* (not a directory) and not equal to `git-common-dir`, you are inside a submodule. Stop and ask.
+**Submodule guard:** `GIT_DIR != GIT_COMMON` is also true inside git submodules. Before concluding "already in a worktree," verify you are not in a submodule:
 
-**If already isolated:** announce it, then continue in place. Skip the rest of this skill.
+```bash
+# If this returns a path, you're in a submodule, not a worktree — treat as normal repo
+git rev-parse --show-superproject-working-tree 2>/dev/null
+```
+
+**If `GIT_DIR != GIT_COMMON` (and not a submodule):** You are already in a linked worktree. Skip to Step 3 (Verify Clean Baseline). Do NOT create another worktree.
+
+Report with branch state:
+- On a branch: "Already in isolated workspace at `<path>` on branch `<name>`."
+- Detached HEAD: "Already in isolated workspace at `<path>` (detached HEAD, externally managed)."
+
+**If `GIT_DIR == GIT_COMMON` (or in a submodule):** You are in a normal repo checkout. Proceed to Step 1.
 
 ## Step 1 — Get Consent (REQUIRED)
 
@@ -47,20 +52,20 @@ Common reasons to **not** create a worktree:
 - Working in a sandbox that doesn't support multiple checkouts
 - User says no
 
-## Step 1a — Prefer the Project's Native Tool
+## Step 1a — Prefer Native Worktree Tools
 
-Many monorepos ship a worktree script that handles setup conventions (deps, isolated DBs, env files). Always prefer it.
+Do you already have a way to create a worktree? It might be a tool with a name like `EnterWorktree`, `WorktreeCreate`, a `/worktree` command, or a `--worktree` flag. If you do, use it and skip to Step 3.
 
-Some projects ship a wrapper script (commonly `script/worktree`, `bin/worktree`, or similar). Check `AGENTS.md`, the repo root, and `script/` / `bin/` directories.
+Native tools handle directory placement, branch creation, and cleanup automatically. Using `git worktree add` when you have a native tool creates phantom state your harness can't see or manage.
 
-A typical wrapper handles:
+**If your project ships a wrapper script instead of a native tool** (commonly `script/worktree`, `bin/worktree`, or similar — check `AGENTS.md`, the repo root, and `script/` / `bin/`), use the wrapper. A typical wrapper handles:
 - Sibling-worktree placement under a project-conventional path
 - Tool-trust setup (e.g. `mise trust`, `direnv allow`)
 - Subproject dependency install (`bundle install`, `uv sync`, `npm install`)
 - Isolated dev/test DB provisioning where the runtime needs it
 - Branch naming conventions (e.g. `<user>/<name>`)
 
-**Prefer the wrapper. Do not call `git worktree add` directly when a wrapper exists.** It encapsulates conventions the raw command will get wrong.
+**Do not call `git worktree add` directly when a native tool or wrapper exists.** Only proceed to Step 2 if neither is available.
 
 ## Step 2 — Fallback: Manual Worktree Creation
 
@@ -152,7 +157,7 @@ Re-run tests after rebasing.
 | Situation | Action |
 |---|---|
 | `GIT_DIR != GIT_COMMON` | Already in worktree — do NOT create another |
-| `.git` is a file | Submodule — do NOT create here |
+| `git rev-parse --show-superproject-working-tree` returns a path | Submodule — treat as normal repo |
 | Project-native wrapper exists | Use the wrapper (commonly `script/worktree create`) |
 | No native tool, `.worktrees/` exists, ignored | Use it |
 | No native tool, not ignored | Add to `.gitignore`, commit, then create |

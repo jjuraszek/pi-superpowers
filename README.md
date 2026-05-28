@@ -1,6 +1,6 @@
 # pi-superpowers
 
-A workflow library for the [pi coding agent](https://github.com/mariozechner/pi): opinionated skills, ready-to-use subagent personas, and two small runtime extensions.
+A workflow library for the [pi coding agent](https://github.com/badlogic/pi-mono): opinionated skills, ready-to-use subagent personas, and three runtime extensions.
 
 Inspired by [obra/superpowers](https://github.com/obra/superpowers) (Claude Code) and [coctostan/pi-superpowers-plus](https://github.com/coctostan/pi-superpowers-plus). Ported to pi and trimmed to the pieces that survive across projects.
 
@@ -21,14 +21,15 @@ Inspired by [obra/superpowers](https://github.com/obra/superpowers) (Claude Code
 - `code-reviewer` — read-only review, Critical/Moderate/Minor severity.
 - `spec-reviewer` — verifies an implementation against its plan/spec, per-requirement table.
 
-**2 runtime extensions**:
+**3 runtime extensions**:
 
 - `plan-tracker` — persistent task list with a TUI widget. Use the `plan_tracker` tool from skills.
+- `phase-tracker` — tracks workflow phase (brainstorm → plan → implement → verify → ship) with a TUI widget. Use the `phase_tracker` tool from skills. Distinct from `plan-tracker` which tracks per-task progress within the implement phase.
 - `verify-before-ship` — advisory warning if you run `git commit` / `git push` / `gh pr create` without passing tests since your last source edit.
 
 ## Requirements
 
-- [pi-coding-agent](https://github.com/mariozechner/pi) ≥ 0.1.0
+- [pi-coding-agent](https://github.com/badlogic/pi-mono) ≥ 0.1.0
 - [pi-subagents](https://github.com/jjuraszek/pi-subagents) — required peer package. Skills that dispatch agents (`requesting-code-review`, `subagent-driven-development`, `dispatching-parallel-agents`, `writing-plans`, `writing-skills`) call `subagent({})`, which is provided by pi-subagents.
 
 Both packages must be listed in your `.pi/settings.json#packages` array (pi adds them automatically when you `pi install`).
@@ -108,6 +109,12 @@ If you want to know what's in each persona before using it, see [`agents/`](./ag
 ### `plan-tracker`
 
 A tool, not a hook. Skills call `plan_tracker({ action: "init" | "update" | "status" | "clear", ... })` to manage a task list; a TUI widget above the editor shows progress (✓/→/○). State branches with the session, no config needed.
+
+### `phase-tracker`
+
+A tool, not a hook. Skills call `phase_tracker({ action: "start" | "complete" | "skip" | "status" | "reset", phase?, reason? })` to track workflow phase progress. A TUI widget shows the five-phase pipeline: `○ brainstorm → ○ plan → ○ implement → ○ verify → ○ ship`. State branches with the session, no config needed.
+
+Distinct from `plan-tracker`: `phase-tracker` answers "what stage of the workflow am I in?"; `plan-tracker` answers "which task within the current stage am I on?"
 
 ### `verify-before-ship`
 

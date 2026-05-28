@@ -42,6 +42,8 @@ If the project's `AGENTS.md` calls out additional reading for a specific area (e
 
 The spec is the **first commit in a dedicated worktree**, not a separate commit on `main`. Before drafting any spec content:
 
+If no phase-tracker state exists (status returns pending across the board), call `phase_tracker({ action: "start", phase: "brainstorm" })` before drafting.
+
 1. Invoke `/skill:using-git-worktrees`. Worktrees live under `.worktrees/` at the repo root, or wherever a project-native worktree script places them.
 2. Switch into the worktree.
 3. From there, write the spec, run self-review, commit, hand off.
@@ -179,7 +181,7 @@ Wait for the user. Don't start implementation, don't open the plan skill, don't 
 After approval, mark the brainstorm phase complete:
 
 ```
-plan_tracker({ action: "update", status: "complete" })   # for the brainstorm phase
+phase_tracker({ action: "complete", phase: "brainstorm" })
 ```
 
 ## Key Principles

@@ -46,10 +46,10 @@ Every skill ends with a "Project overrides" block pointing to `.pi/superpowers-o
 Before committing skill edits, run:
 
 ```bash
-rg -ni "gridstrong|specific.company.name" skills/
+rg -ni "gridstrong|jjuraszek|/Users/[^/]+|<your-org-name>" skills/
 ```
 
-Expected: zero matches. Linear/Jira/`script/worktree`-style references are OK as **examples** but never as canonical paths.
+Replace the placeholders above with patterns specific to your fork — company names, your username paths, internal service names. Expected: zero matches. Linear/Jira/`script/worktree`-style references are OK as **examples** but never as canonical paths.
 
 ### Agents
 
@@ -72,11 +72,12 @@ If you must override at call site, the only callable knobs are `model`, `task`, 
 
 ### Extensions
 
-Both extensions ship in `extensions/`:
+All three extensions ship in `extensions/`:
 
 | Extension | Configurable | Settings key |
 |---|---|---|
-| `plan-tracker.ts` | No (pure state tracker, no project-specific defaults) | — |
+| `plan-tracker.ts` | No | — |
+| `phase-tracker.ts` | No | — |
 | `verify-before-ship.ts` | Yes | `settings.json#piSuperpowers.verifyBeforeShip` (keys: `testCommands`, `warningReference`) |
 
 Hardcoded project paths or commands in extensions are forbidden. If you add a new configurable behavior, surface it as a `piSuperpowers.<extensionName>` settings key with a sane default and document it in `README.md`.

@@ -15,6 +15,8 @@ DRY. YAGNI. TDD. Frequent commits.
 
 **Announce at start:** "I'm using the writing-plans skill to create the implementation plan."
 
+Before drafting the plan, call `phase_tracker({ action: "start", phase: "plan" })`.
+
 **Input:** an approved spec in `<project>/doc/specs/<filename>.md` (produced by `/skill:brainstorming`).
 
 **Save plans to:** the sibling `doc/plans/` directory next to the spec. The plan filename matches the spec filename exactly — same date, same Linear ID (if any), same topic slug, no `-design` suffix.
@@ -165,13 +167,13 @@ If a decision is genuinely open, put it in an explicit **Open Questions** sectio
 
 ## Self-Review (Before Handoff)
 
-After drafting the plan and before announcing it complete, run three checks yourself, then dispatch the plan-document reviewer.
+After drafting the plan and before announcing it complete, run three checks yourself. This is a checklist you run yourself — not a subagent dispatch.
 
 - **Spec coverage.** Cross-reference the spec's components/decisions/constraints against the plan. Does every spec section map to one or more tasks? If a spec decision has no implementation task, the plan is missing work or the spec was overspecified.
 - **Placeholder scan.** Grep the doc for `TODO`, `TBD`, `xxx`, `[fill in]`, `<example>`, `etc.`, "probably", "something like". Resolve or convert each into an explicit Open Question.
 - **Type / API consistency.** Function signatures and field names that appear in multiple tasks must match exactly. The plan is its own contract — internal contradictions surface as bugs during execution.
 
-Then dispatch the plan-document reviewer (see `plan-document-reviewer-prompt.md` in this skill directory). This is a fresh-context subagent that audits the plan as a document, not an implementation. Fix what either pass finds before handoff.
+Fix what this review finds before handoff.
 
 ## Remember
 
@@ -188,7 +190,7 @@ Then dispatch the plan-document reviewer (see `plan-document-reviewer-prompt.md`
 After saving the plan, mark the planning phase complete:
 
 ```
-plan_tracker({ action: "update", status: "complete" })
+phase_tracker({ action: "complete", phase: "plan" })
 ```
 
 Then offer execution choice:

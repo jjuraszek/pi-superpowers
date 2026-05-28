@@ -1,5 +1,16 @@
 # Changelog
 
+## v0.2.0 — 2026-05-28
+
+- **writing-plans:** drop `plan-document-reviewer-prompt.md` subagent dispatch from the Self-Review step. Align with obra v5.0.6 — inline self-review only. The dispatch added ~25 min/run with no measured quality gain and contradicted the repo's no-belt-and-suspenders rule.
+- **using-git-worktrees:** port obra v5.1.0 Step 0 improvements — robust path resolution via `cd && pwd -P` wrapping, submodule guard via `git rev-parse --show-superproject-working-tree` (replaces fragile `.git is a file` heuristic), branch-state reporting after detection.
+- **using-git-worktrees:** port obra v5.1.0 Step 1a improvements — explicit native-tool name anchors (`EnterWorktree`, `WorktreeCreate`, `/worktree`, `--worktree`). Upstream TDD showed compliance jumped from 2/6 to 50/50 with explicit names.
+- **writing-skills:** fix dead reference to `examples/CLAUDE_MD_TESTING.md` in `reference/testing-skills-with-subagents.md`. File was never ported; replaced with pointer to upstream `obra/superpowers` repo.
+- **README:** fix broken link — `mariozechner/pi` → `badlogic/pi-mono` (was 404).
+- **AGENTS.md:** improve verification grep example — replace meaningless `specific.company.name` placeholder with realistic patterns (`jjuraszek`, `/Users/[^/]+`, `<your-org-name>`).
+- **extensions:** add `phase-tracker.ts` — tracks workflow phase (brainstorm → plan → implement → verify → ship) with a TUI widget. Session-state only, no disk persistence.
+- **skills:** rewire `brainstorming`, `writing-plans`, `test-driven-development`, `verification-before-completion`, and `finishing-a-development-branch` to call `phase_tracker` for phase progress instead of (mis)using `plan_tracker`. `plan_tracker` is now used correctly — only for per-task progress in `subagent-driven-development` and `executing-plans`.
+
 ## v0.1.2 — 2026-05-28
 
 - **Agents:** add `thinking`, `defaultContext`, `inheritSkills` frontmatter to all three personas. Previously these knobs were documented in `AGENTS.md` but missing from the agent files, so dispatch fell back to pi-subagents defaults (typically `thinking: high`, no defaultContext override). Now: reviewers use `thinking: high` + `defaultContext: fresh`; implementer uses `thinking: medium` + `defaultContext: fork`. All three use `inheritSkills: false` to prevent recursive skill discovery in dispatched children.

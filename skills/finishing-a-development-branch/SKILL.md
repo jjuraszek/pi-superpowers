@@ -13,6 +13,8 @@ Guide completion of development work by presenting clear options and handling ch
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
+At start, call `phase_tracker({ action: "start", phase: "ship" })`.
+
 ## The Process
 
 ### Step 1: Verify Tests
@@ -260,6 +262,14 @@ git worktree prune  # Self-healing: clean up any stale registrations
 **Skipping the plan-doc deletion in Option 1**
 - **Problem:** Plan docs are ephemeral and shouldn't land on `<base-branch>`. Forgetting `git rm doc/plans/<plan-file>.md` ships scaffolding to main.
 - **Fix:** The plan stays in the deleted branch's git history (`git log --all -- doc/plans/...`). Spec stays on `<base-branch>`; plan does not.
+
+## Completion
+
+Once the chosen option (Options 1, 2, or 3 — not Discard) is executed successfully, mark the ship phase complete:
+
+```
+phase_tracker({ action: "complete", phase: "ship" })
+```
 
 ## Red Flags
 

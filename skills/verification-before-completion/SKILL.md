@@ -147,7 +147,13 @@ The `verify-before-ship` extension shipped by pi-superpowers watches `git commit
 
 Defaults recognise `make ci`, `make test`, `npm test`, `pytest`, `rspec`, `cargo test`, `go test`. Projects can override (or narrow) the list via `settings.json#piSuperpowers.verifyBeforeShip.testCommands`.
 
-When all verification passes, mark the verify phase complete: call `plan_tracker` with `{action: "update", status: "complete"}` for the current phase.
+Before running the verification gate, call `phase_tracker({ action: "start", phase: "verify" })`.
+
+When all verification passes, mark the verify phase complete:
+
+```
+phase_tracker({ action: "complete", phase: "verify" })
+```
 
 ## Project overrides
 

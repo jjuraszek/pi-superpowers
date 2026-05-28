@@ -19,6 +19,8 @@ Write the test first. Watch it fail. Write minimal code to pass.
 - Active branch (not main) or user-confirmed intent to work on main
 - Approved plan or clear task scope
 
+Before starting implementation, call `phase_tracker({ action: "start", phase: "implement" })`.
+
 ## When to Use
 
 **Always:**
@@ -217,7 +219,11 @@ Otherwise → not TDD
 
 No exceptions without your human partner's permission.
 
-When the TDD implementation cycle is complete (all tests green, code committed), mark the implement phase complete: call `plan_tracker` with `{action: "update", status: "complete"}` for the current phase.
+When the TDD implementation cycle is complete (all tests green, code committed), mark the implement phase complete:
+
+```
+phase_tracker({ action: "complete", phase: "implement" })
+```
 
 ## Project overrides
 
