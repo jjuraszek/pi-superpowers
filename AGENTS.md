@@ -89,7 +89,7 @@ Hardcoded project paths or commands in extensions are forbidden. If you add a ne
 ```bash
 # In a consumer repo:
 pi install -l ~/repos/pi-superpowers
-cd ~/repos/pi-superpowers && npm run link-agents   # one-time per machine, symlinks agents/*.md into ~/.agents/
+cd ~/repos/pi-superpowers && npm run link-agents   # one-time per machine, symlinks agents/*.md into getAgentDir()/agents (default ~/.pi/agent/agents)
 ```
 
 Edits in `~/repos/pi-superpowers/skills/` and `~/repos/pi-superpowers/extensions/` reload on next pi launch. Edits to `agents/*.md` are live via symlinks.

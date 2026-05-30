@@ -1,5 +1,11 @@
 # Changelog
 
+## v0.4.0 — 2026-05-30
+
+- **install-agents:** user installs now symlink personas into `getAgentDir()/agents` (`$PI_CODING_AGENT_DIR/agents`, default `~/.pi/agent/agents`) instead of the global `~/.agents/`. This is pi-subagents' profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, `agent.bedrock`, …) gets its own personas and stops sharing one global dir. Project installs are unchanged (copy into `<repo>/.pi/agents/`).
+- **install-agents:** migration — older versions symlinked into `~/.agents/`, which pi-subagents still discovers and which *wins* over `getAgentDir()/agents` on name collisions. User installs now remove stale `~/.agents/<name>.md` symlinks that resolve into a pi-superpowers package so they no longer shadow the profile-scoped install. Real files and unrelated symlinks in `~/.agents/` are left untouched.
+- **install-agents:** `PI_SUPERPOWERS_AGENT_DIR` override now expands a leading `~`/`~/`.
+
 ## v0.3.0 — 2026-05-30
 
 - **install-agents:** project installs now copy personas into `<repo>/.pi/agents/` (project scope) instead of symlinking into the global `~/.agents/`. Previously every install — user or project — wrote to the shared `~/.agents/` keyed by filename, so personas were effectively global across all pi profiles and the last install to run won the symlink. The installer now detects whether the package lives under `<repo>/.pi/...` (project → copy, install-managed, gitignored) or `<home>/.pi/<profile>/...` (user → symlink into `~/.agents/`, unchanged). Local-path dev installs and `PI_SUPERPOWERS_AGENT_DIR` keep symlink behavior. Project scope wins over user scope on name collisions, so per-repo installs are now independent.
