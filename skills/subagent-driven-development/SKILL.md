@@ -44,10 +44,12 @@ Periodic "should I continue?" prompts add latency without adding safety. The pla
 
 | | subagent-driven-development | executing-plans |
 |---|---|---|
-| Session | Same (this one) | Parallel session |
+| Session | Same (this one) | Separate Session |
 | Per-task context | Fresh subagent | Same orchestrator session |
 | Best for | Independent tasks | Sequential, tightly-coupled tasks |
 | Pause cadence | None (continuous) | Per task |
+
+subagent-driven-development runs **sequentially by default**; when the plan groups independent tasks into waves, [Parallel-Wave Mode](#parallel-wave-mode) parallelizes the tasks within a wave.
 
 **Dependent tasks:** include the previous task's implementation summary and relevant file paths in the next subagent's `task`. Track outputs so you can pass them forward.
 
@@ -120,6 +122,53 @@ Prompt templates live alongside this SKILL.md:
 - `./spec-reviewer-prompt.md`
 - `./code-quality-reviewer-prompt.md`
 
+## Parallel-Wave Mode
+
+Chosen at handoff (option 2) when the plan groups tasks into **waves** (see `writing-plans`). Waves run in sequence; within a wave, file-disjoint tasks run concurrently in isolated worktrees, integrated serially behind one test + review gate. The sequential [Process](#the-process) above is the default and the fallback; this mode is the deliberate, worktree-isolated exception to the "no parallel implementers" red flag.
+
+**Progress tracking (`plan_tracker`).** `plan_tracker` is a flat list with no native group concept, so waves are *encoded*, not modeled:
+
+- **Init once, wave-ordered:** `init` with every task across all waves in wave order, each name prefixed with its wave (`"W1: <title>"`, `"W2: <title>"`, …). Indices are positional and stable; never re-init mid-run (it drops statuses).
+- **Wave fan-out → `in_progress`:** mark every task index in the wave `in_progress`. Multiple simultaneous `in_progress` entries is expected (sequential mode has one).
+- **Wave commit → `complete`:** after the wave's gate passes and it commits, mark all that wave's indices `complete`. `complete` = durably committed, so a task in conflict-fallback stays `in_progress` until its wave commits.
+- **Lifecycle per task:** `pending → in_progress (wave fan-out) → complete (wave commit)`.
+- **Widget caveat (known, deliberately unfixed).** The persistent `plan_tracker` widget's icon strip (`○ → ✓`) and `(c/total)` count reflect every task, but its trailing *name* shows only the **first** `in_progress` task. In parallel mode the icon strip and the `status` action are the full in-flight view; a richer multi-task widget is a separate extension change, out of scope (YAGNI).
+- **Sequential mode is unchanged:** init the full list, one `in_progress` at a time; wave prefixes are harmless if present.
+
+**Per-wave loop:**
+
+1. **Independence check.** Parse the wave's tasks' `Files:` blocks; assert pairwise-disjoint. Overlap → the wave is mis-grouped; run those tasks as sequential single-task waves and note it.
+2. **Fan out.** One parallel dispatch (shape below): `implementer` per task, `context: "fresh"`, `worktree: true`. Each returns a status + a patch.
+3. **Status + spec review per task.** Parse each `DONE`/`BLOCKED`/etc. (see [Implementer Status](#implementer-status)); spec-review each returned patch against its task (read-only, parallelizable). Re-dispatch incomplete tasks (fresh, `worktree: true`) until `DONE` + spec ✅.
+4. **Integrate.** `git apply` each task's patch sequentially onto HEAD. Apply fails = textual conflict → drop that task, finish the rest, re-run the dropped task sequentially on the updated HEAD.
+5. **Test gate.** Run the suite on the integrated tree. Failure = semantic conflict or bug → re-run the offending task sequentially, else fix per [When a Subagent Fails](#when-a-subagent-fails).
+6. **Quality review.** Code-quality review on the integrated wave diff; loop fixes to ✅.
+7. **Commit the wave.** Leaves a clean tree; the next wave's children branch from this commit and so see the integrated work.
+
+**Two-stage review is preserved:** spec review per task (pre-integration), quality review per wave (post-integration). Both gates required before the wave commits.
+
+**Dependent context across waves:** wave N+1 tasks branch from a HEAD containing wave N, so they see the code; still forward wave N's task summaries into wave N+1 prompts.
+
+**Caveat:** each task must be independently runnable and verifiable in a fresh worktree — no reliance on uncommitted local state. `pi-subagents` symlinks `node_modules`; repos needing other per-worktree setup must account for it.
+
+**Set `cwd` to your worktree — resilience-critical.** This whole workflow runs *inside* a worktree, but the `subagent` tool resolves the worktree base from the **top-level `cwd`**, which defaults to the orchestrator's process cwd — the *primary* checkout (usually `main`), not the worktree. Omit `cwd` and `worktree: true` branches every child from the primary checkout's HEAD: the children never see your spec, plan, or prior-wave commits, and integration runs against the wrong baseline. Pass the worktree's absolute path as the top-level `cwd`. Do **not** set per-task `cwd` under `worktree: true` — pi-subagents requires it to equal the shared cwd and errors otherwise. (Clean-tree is enforced here too — `resolveRepoState` rejects a dirty tree — which is why each wave commits before the next.)
+
+```ts
+subagent({
+  context: "fresh",
+  cwd: "/abs/path/to/this/worktree",  // REQUIRED: the worktree you're in, else children branch from main
+  worktree: true,        // each task in its own git worktree, branched from cwd's HEAD
+  concurrency: 4,        // default; cap = wave size
+  tasks: [
+    // do NOT set per-task cwd under worktree:true — it must equal the top-level cwd or the run errors
+    { agent: "implementer", task: "<task text + owned files + status protocol>", output: "wave1-task1.md" },
+    { agent: "implementer", task: "<task text + owned files + status protocol>", output: "wave1-task2.md" },
+  ],
+})
+```
+
+For the fan-out + worktree + patch-integration + conflict mechanics, see `dispatching-parallel-agents`.
+
 ## When a Subagent Fails
 
 **You are the orchestrator. You do NOT write code.**
@@ -145,7 +194,7 @@ Prompt templates live alongside this SKILL.md:
 ## Red Flags — STOP
 
 - Writing code yourself instead of dispatching
-- Dispatching multiple implementer subagents in parallel on overlapping files
+- Dispatching parallel implementers on overlapping files, or without `worktree: true` outside Parallel-Wave Mode (wave mode is the sanctioned exception: disjoint files + worktree isolation + serial integration)
 - Making a subagent read the plan instead of passing task text
 - Starting code-quality review before spec compliance is ✅
 - Moving to next task with either review still showing issues
@@ -166,7 +215,7 @@ Prompt templates live alongside this SKILL.md:
 - TDD — runtime warnings on source-before-test. Implementer agents receive the three-scenario TDD instructions (new feature / modifying tested code / trivial) via agent profile and prompt template.
 
 **Alternative:**
-- `/skill:executing-plans` — use for parallel-session execution instead of same-session.
+- `/skill:executing-plans` — use for separate-session execution instead of same-session.
 
 ## Project overrides
 

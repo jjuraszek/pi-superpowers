@@ -9,9 +9,11 @@ description: Use when facing 2+ independent tasks that can be worked on without 
 
 ## Overview
 
-When you have multiple unrelated failures (different test files, different subsystems, different bugs), investigating them sequentially wastes time. Each investigation is independent and can happen in parallel.
+When you have multiple **independent tasks** — unrelated test failures, or implementation tasks from a plan wave — that touch disjoint files, running them sequentially wastes time. Each can happen in parallel.
 
-**Core principle:** Dispatch one agent per independent problem domain. Let them work concurrently.
+**Core principle:** Dispatch one agent per independent problem domain (one bug, one subsystem, or one plan task). Let them work concurrently.
+
+This skill is the **mechanic home** for parallel fan-out: fresh-context isolation, `worktree: true` filesystem isolation, and serial patch integration. `subagent-driven-development`'s Parallel-Wave Mode builds its per-wave dispatch on this skill — debugging is the worked example below, but the mechanics are identical for implementation tasks.
 
 **Why parallel subagents:** each agent gets a fresh context window with only its problem domain. No cross-contamination between investigations, smaller diffs, faster wall-clock time. You stay the orchestrator — you read the summaries, resolve any file overlap, and run the integrated tests.
 
@@ -86,6 +88,8 @@ subagent({
 
 The top-level `context: "fresh"` applies to every task in the batch. Omitting it produces parallel-but-forked agents that share parent history — the worst of both worlds.
 
+**Editing tasks:** add `worktree: true` so each task's writes are isolated in its own git worktree (see [pi-subagents Integration](#pi-subagents-integration)); omit it only for read-only investigations.
+
 ### 4. Review and Integrate
 
 When agents return:
@@ -94,7 +98,9 @@ When agents return:
 - Run full test suite
 - Integrate all changes
 
-**If agents edited the same files:** Review manually. Pick the correct version per hunk, or re-run one agent with the other's changes as context. Don't blindly merge.
+**If agents edited the same files (textual conflict):** the orchestrator does **not** hand-merge code. Prefer re-running one agent sequentially with the other's integrated changes as context, so it adapts. Manual per-hunk merge is a last resort. (Avoid this entirely by giving each agent disjoint files — see the file-ownership contract in `writing-plans`.)
+
+**If integrated changes apply cleanly but the suite fails (semantic conflict):** agents made incompatible assumptions across disjoint files (renamed symbol, changed shape). Diagnose the incompatible pair and re-run the offending task sequentially on the integrated HEAD.
 
 **If some agents failed:** Integrate successful agents first (commit their work). Then retry the failed agent with fresh context that includes the integrated changes.
 
@@ -154,6 +160,7 @@ Parallel dispatch rides on the `subagent` tool (the pi-subagents package). Mecha
 - **Parallel mode** — pass a `tasks` array; entries run concurrently. `concurrency` (default 4) caps how many run at once.
 - **Context** — `context: "fresh"` at the top level applies to every task. Mandatory here (see above); without it `worker` forks parent history and you lose isolation.
 - **Filesystem isolation** — `worktree: true` runs each task in its own git worktree so concurrent edits can't collide. Requires clean git state; each task's diff returns separately for you to integrate. Omit it for read-only investigations.
+- **Worktree base / `cwd`** — under `worktree: true` the base commit is `HEAD` resolved from the **top-level `cwd`**, which defaults to the orchestrator's process cwd. When you orchestrate from inside a git worktree, pass that worktree's absolute path as the top-level `cwd`, or children branch from the wrong checkout. Don't set per-task `cwd` with `worktree: true` — it must equal the shared cwd or the run errors.
 - **Agent choice** — `worker` is the pi-subagents builtin generalist. Use a persona (`implementer`, `code-reviewer`) when you want its system prompt and tool profile. Persona frontmatter (tools, thinking, context) is fixed; only `model`, `task`, `output`, `reads`, `progress`, `skill` are callable per task.
 - **Output capture** — `output: "<file>"` writes a task's summary to a file instead of inline; add `outputMode: "file-only"` for large results.
 

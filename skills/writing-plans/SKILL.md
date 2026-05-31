@@ -73,6 +73,32 @@ List the files this implementation will create, modify, or delete. Group by comp
 
 If you can't list the files, the spec isn't ready. Send it back to `/skill:brainstorming`.
 
+## Wave Grouping
+
+Group tasks into **waves** so the executor can parallelize independent work (see `subagent-driven-development` Parallel-Wave Mode). A wave is a maximal set of tasks that (a) have no ordering dependency on each other and (b) own **pairwise-disjoint files**.
+
+- Tasks nest under `## Wave N — <label>` headers; `### Task N` headers sit inside a wave.
+- A wave with one task is legal (runs sequentially). A pure dependency chain yields one task per wave — no parallelism, which is correct.
+- Each wave after the first states its dependency on prior waves.
+
+**File-ownership contract.** The per-task `**Files:**` block *is* the ownership declaration — no new syntax. Rule: **within a wave, the union of every task's declared paths must be pairwise disjoint.** Globs are allowed for `Modify` when exact paths are unknown, but must not overlap another same-wave task's paths. A task that must touch another's file belongs in a later wave.
+
+```markdown
+## Wave 1 — Foundations
+
+Parallel-safe: Tasks 1–3 own disjoint files (see each task's Files block).
+
+### Task 1: ...
+### Task 2: ...
+### Task 3: ...
+
+## Wave 2 — Wire-up
+
+Depends on Wave 1: Task 4 consumes the API introduced by Task 1.
+
+### Task 4: ...
+```
+
 ## Bite-Sized Task Granularity
 
 Each step is **one action, 2-5 minutes**:
@@ -172,6 +198,7 @@ After drafting the plan and before announcing it complete, run three checks your
 - **Spec coverage.** Cross-reference the spec's components/decisions/constraints against the plan. Does every spec section map to one or more tasks? If a spec decision has no implementation task, the plan is missing work or the spec was overspecified.
 - **Placeholder scan.** Grep the doc for `TODO`, `TBD`, `xxx`, `[fill in]`, `<example>`, `etc.`, "probably", "something like". Resolve or convert each into an explicit Open Question.
 - **Type / API consistency.** Function signatures and field names that appear in multiple tasks must match exactly. The plan is its own contract — internal contradictions surface as bugs during execution.
+- **Wave disjointness.** For every multi-task wave, confirm the tasks' `Files:` sets are pairwise disjoint. Overlap = mis-grouped wave; split or re-order before handoff.
 
 Fix what this review finds before handoff.
 
@@ -182,7 +209,7 @@ Fix what this review finds before handoff.
 - Exact commands with expected output
 - Reference relevant skills
 - DRY, YAGNI, TDD, frequent commits
-- Order tasks so dependencies are satisfied by earlier tasks
+- Group dependency-free, file-disjoint tasks into the same wave; order waves so each wave's dependencies are satisfied by earlier waves
 - If the plan exceeds ~8 tasks, split into phases with checkpoints
 
 ## Execution Handoff
@@ -195,15 +222,16 @@ phase_tracker({ action: "complete", phase: "plan" })
 
 Then offer execution choice:
 
-> Plan complete and saved to `<project>/doc/plans/<filename>.md` in the worktree. Two execution options:
+> Plan complete and saved to `<project>/doc/plans/<filename>.md` in the worktree. Execution options:
 >
-> 1. **Subagent-Driven (this session)** — fresh subagent per task with two-stage review. Better for plans with many independent tasks.
-> 2. **Parallel Session (separate)** — batch execution with human review checkpoints. Better when tasks are tightly coupled or you want more control between batches.
+> 1. **Subagent-Driven, sequential (this session)** — fresh subagent per task with two-stage review. The default.
+> 2. **Subagent-Driven, parallel waves (this session)** — independent tasks in a wave run concurrently in isolated worktrees, integrated serially with the same two-stage review. *(Offer only when the plan has ≥2 tasks in some wave.)*
+> 3. **Separate Session (executing-plans)** — batch execution with human review checkpoints. Better when tasks are tightly coupled or you want more control between batches.
 >
 > Which approach?
 
-- Subagent-Driven → `/skill:subagent-driven-development` in this session.
-- Parallel Session → user opens new session in worktree → `/skill:executing-plans`.
+- Subagent-Driven (sequential or parallel waves) → `/skill:subagent-driven-development` in this session.
+- Separate Session → user opens new session in worktree → `/skill:executing-plans`.
 
 ## Red Flags — STOP
 
