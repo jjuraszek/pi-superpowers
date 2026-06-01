@@ -15,15 +15,38 @@ Identify the target project → set up an isolated worktree → understand curre
 
 ## HARD CONSTRAINT
 
-While this skill is active, you may **only** read code/docs and write to the project's `doc/specs/` directory.
+While this skill is active, do **not** take any implementation action until you have presented a design and the user has approved it. This applies to **every** change regardless of perceived simplicity. An implementation-heavy request ("test it end-to-end", "push a request to rabbit", "run the service") does not lift this gate — it just tells you what the spec must cover.
+
+You **may**:
+- Read code and docs
+- Run the existing system to observe its **current** behaviour — this is research and feeds the spec (boot a local service, replay a sample request, capture a baseline classification, etc.)
+- Write to the project's `doc/specs/` directory
 
 You may **not**:
 - Write or edit code outside `doc/specs/`
+- Scaffold a project, or take any action that builds, deploys, or validates the **proposed change** — running new/edited code, exercising behaviour that doesn't exist yet, or "testing the fix" before there is one
 - Run implementation skills (`/skill:test-driven-development`, `/skill:executing-plans`, etc.)
 - Commit the spec directly on `main` in the primary checkout — it must land inside the worktree (see [Worktree First](#worktree-first))
 - Start writing the plan (that's `/skill:writing-plans` — separate phase)
 
+The line: exercising the system **as it is today** is research; exercising the **change you're proposing** is implementation and waits for the gate.
+
 This skill ends with a **written, user-reviewed spec inside a worktree**. Nothing else.
+
+## Checklist
+
+Create a task for each item and complete them **in order**. The terminal state is the user review gate; after approval the **only** next skill is `/skill:writing-plans`. Do not jump to implementation, and do not silently drop the council offer.
+
+1. **Set up the worktree** — see [Worktree First](#worktree-first)
+2. **Explore project context** — files, docs, recent commits, current behaviour
+3. **Ask clarifying questions** — one at a time
+4. **Propose 2-3 approaches** — with trade-offs and a recommendation
+5. **Present the design** — in sections, get approval after each
+6. **Write the spec** — to `doc/specs/` (see [Filename Convention](#filename-convention))
+7. **Spec self-review** — placeholders, consistency, scope, ambiguity
+8. **Offer the spec council** — required step when one is configured; skip only when unconfigured (see [Spec Council](#spec-council-optional))
+9. **User review gate** — user reviews the committed spec
+10. **Transition** — only after approval, invoke `/skill:writing-plans`
 
 ## Project Routing
 
@@ -164,7 +187,7 @@ Fix what self-review surfaces before handing to the user.
 
 ## Spec Council (Optional)
 
-After self-review and before the user review gate, if a spec council is configured for the active preset (`piSuperpowers.specCouncil.members` in `$PI_CODING_AGENT_DIR/settings.json`), offer a multi-model critique pass — see `/skill:roasting-the-spec`. If it is not configured, skip silently and proceed to the gate. Approved council edits are applied to the spec and ride in the same worktree commit as the rest of this skill's output.
+After self-review and before the user review gate, check whether a spec council is configured for the active preset (`piSuperpowers.specCouncil.members` in `$PI_CODING_AGENT_DIR/settings.json`). **When one is configured, making the offer is a required checklist step (item 8) — present it explicitly and wait; do not skip ahead to the gate.** Offer a multi-model critique pass — see `/skill:roasting-the-spec`. If no council is configured, skip silently and proceed to the gate. Approved council edits are applied to the spec and ride in the same worktree commit as the rest of this skill's output.
 
 ## User Review Gate
 
@@ -201,6 +224,8 @@ phase_tracker({ action: "complete", phase: "brainstorm" })
 ## Red Flags — STOP
 
 - About to write code or start a non-spec edit while this skill is active
+- About to run, deploy, or validate the **proposed change** (vs. observing current behaviour) before the user approved the design
+- About to skip the spec council offer when one is configured
 - About to skip the self-review pass
 - About to skip the user review gate and jump to `/skill:writing-plans`
 - Spec contains `TODO`, `TBD`, or unnamed components
