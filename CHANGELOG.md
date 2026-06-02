@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3 — 2026-06-02
+
+- **roasting-the-spec / spec-council-synthesizer:** stop the chair stalling at synthesis. The member critiques live in a shared temp dir and rode to the chair only via `reads:`, but the synthesizer's prompt told it that it "receives the paths" — which the task never enumerated, so it scanned the tree for `*.md` and hung. The skill now lists the exact `<tmpdir>/member-<i>-<slug>.md` paths in the chair's task text (flagged as already-injected via reads), and the synthesizer persona is instructed not to run find/grep/ls to discover critique files.
+
 ## v1.0.2 — 2026-06-01
 
 - **brainstorming:** phase tracking now starts unconditionally on skill entry. The `phase_tracker({ action: "start", phase: "brainstorm" })` call was previously gated behind a `status`-probe conditional ("if status returns pending across the board") and buried inside *Worktree First* under the worktree-setup step — the exact step the model defers when a conversational prompt arrives, so a question-heavy entry could answer the user and never start tracking. Hoisted it to **checklist item 1** as the first action on entry (before reading code, worktree setup, or replying), documented its idempotency (re-entry while in-progress is a safe no-op), and removed the status-probe guard. Checklist renumbered (10→11 items); spec-council reference updated to item 9.

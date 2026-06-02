@@ -85,9 +85,14 @@ subagent({
   agent: "spec-council-synthesizer",
   model: <chair from config, else omit to inherit>,
   reads: [ <the member file paths under the temp dir> ],
-  task: "Problem statement: <paste>. Spec: <abs path>. Consolidate and adjudicate the member critiques."
+  task: "Problem statement: <paste>. Spec: <abs path>.\n" +
+        "Member critiques (already injected via reads — do not search for them):\n" +
+        members.map((model, i) => "<tmpdir>/member-" + i + "-" + slug(model) + ".md").join("\n") + "\n" +
+        "Consolidate and adjudicate the member critiques."
 })
 ```
+
+List the exact member paths in the task text. The `reads:` array injects their contents, but the chair's prompt expects the paths explicitly; without them it scans the tree for `*.md` and stalls.
 
 If the configured `chair` model is unreachable, retry once with the inherited model.
 
