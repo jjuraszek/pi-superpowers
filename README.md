@@ -43,14 +43,14 @@ Both packages must be listed in your `.pi/settings.json#packages` array (pi adds
 
 ```bash
 pi install -l git:github.com/jjuraszek/pi-subagents@<sha-or-tag>
-pi install -l git:github.com/jjuraszek/pi-superpowers@v1.2.0
+pi install -l git:github.com/jjuraszek/pi-superpowers@v1.2.1
 ```
 
 **User scope** (all repos under your pi profile):
 
 ```bash
 pi install git:github.com/jjuraszek/pi-subagents@<sha-or-tag>
-pi install git:github.com/jjuraszek/pi-superpowers@v1.2.0
+pi install git:github.com/jjuraszek/pi-superpowers@v1.2.1
 ```
 
 Pi clones the package, runs `npm install --omit=dev`, which triggers the `postinstall` script. Where personas land depends on the install location:
@@ -112,19 +112,17 @@ Target dir override: set `PI_SUPERPOWERS_AGENT_DIR` to force symlinking into a s
 
 ### Conformance gate model
 
-`conformance-reviewer` ships without a `model:` in its frontmatter — like the spec-council personas, its model is supplied per preset so each profile points the last correctness gate at the strongest reasoning model its providers can reach. Add it to each preset's `settings.json`:
+`conformance-reviewer` ships without a `model:` in its frontmatter — like the spec-council personas, its model is supplied per preset so each profile points the last correctness gate at the strongest reasoning model its providers can reach. The verify-step skills read it from `piSuperpowers.closureReview.model` and inject it **call-site** on the conformance dispatch (the same mechanism the spec-council chair uses). Add it to each preset's `settings.json`:
 
 ```json
 {
-  "subagents": {
-    "agentOverrides": {
-      "conformance-reviewer": { "model": "<provider/model>" }
-    }
+  "piSuperpowers": {
+    "closureReview": { "model": "<provider/model>" }
   }
 }
 ```
 
-Frontmatter pins `thinking: xhigh` and `defaultContext: fresh` (the gate always runs cold, with max reasoning), so the override only needs to supply `model`. With no override the agent falls back to the harness default model.
+Frontmatter pins `thinking: xhigh` and `defaultContext: fresh` (the gate always runs cold, with max reasoning) and `thinking` is not call-site overridable, so the config supplies only `model`. If `closureReview.model` is unset the dispatch omits `model:` and the gate inherits the parent's model; if the configured model is unreachable it retries once inherited.
 
 If you want to know what's in each persona before using it, see [`agents/`](./agents/). The frontmatter (tools, thinking level, context mode) is documented in [`AGENTS.md`](./AGENTS.md#agents).
 

@@ -36,9 +36,14 @@ whole-PR code-quality review. Fusing the two subordinates intent-coverage to a
 code-quality system prompt and compresses the conformance result to an
 afterthought. Code quality is one dispatch; conformance is another.
 
-The persona ships model-free; its model is set per-harness via
-`settings.json#subagents.agentOverrides.conformance-reviewer`. Point it at the
-strongest reasoning model the preset can reach — this is the last correctness gate.
+The persona ships model-free. Read the active preset's settings at
+`$PI_CODING_AGENT_DIR/settings.json` for `piSuperpowers.closureReview.model` and
+inject it **call-site** on the dispatch (`model:` if set, else omit to inherit the
+parent's model) — the same mechanism the spec-council chair uses. If the configured
+model is unreachable, retry once with the inherited model. Point it at the strongest
+reasoning model the preset can reach — this is the last correctness gate.
+`thinking` stays frontmatter-pinned at `xhigh` and is not call-site overridable, so
+the config supplies only `model`.
 
 Self-checking in the main session is the fallback when delegation isn't possible.
 

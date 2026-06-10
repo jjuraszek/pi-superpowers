@@ -1,6 +1,6 @@
 {
   "name": "@jjuraszek/pi-superpowers",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Workflow skills, agent personas, and extensions for the pi coding agent. Inspired by obra/superpowers.",
   "type": "module",
   "license": "MIT",

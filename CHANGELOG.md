@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.2.1 — 2026-06-09
+
+Move the `conformance-reviewer` model config from `subagents.agentOverrides.conformance-reviewer` to `piSuperpowers.closureReview.model`, injected **call-site** by the verify-step skills — the same mechanism the spec-council chair uses. Consolidates all pi-superpowers quality-lever model config under the `piSuperpowers.*` namespace (council + closure gate discoverable in one place) and gives the gate's model call-site precedence.
+
+- **Config key changed.** Pin the gate via `settings.json#piSuperpowers.closureReview.model` (was `subagents.agentOverrides.conformance-reviewer`). The verify steps of `subagent-driven-development` / `executing-plans` / `verification-before-completion` read it from `$PI_CODING_AGENT_DIR/settings.json` and pass `model:` call-site; unset → omit → inherit the parent's model; unreachable → retry once inherited.
+- **`thinking` stays frontmatter-pinned** at `xhigh` (not call-site overridable), so the config supplies only `model` — the dedicated persona is what guarantees max reasoning + fresh context regardless of the model pin.
+- **Migration:** consumers replace `subagents.agentOverrides.conformance-reviewer` with `piSuperpowers.closureReview.model` in each preset. No persona or dispatch-shape change; `conformance-reviewer` still ships model-free.
+- **Docs:** README (`Conformance gate model`), `AGENTS.md` rationale.
+
 ## v1.2.0 — 2026-06-09
 
 Add a dedicated `conformance-reviewer` persona for the closing-loop intent gate, replacing the reuse of `code-reviewer` for conformance. Session audits showed the closure check was being **fused into the whole-PR code review** on a single `code-reviewer` dispatch: the code-quality system prompt dominated, the conformance result was compressed to a one-line afterthought, and the gate ran on whatever model `agentOverrides.code-reviewer` pinned (mid-tier) rather than the strongest available.

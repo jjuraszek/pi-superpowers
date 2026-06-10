@@ -92,7 +92,7 @@ Pi-subagents accepts a per-task `model` override. Use it.
 | Spec review | Default | Reads diff + spec, mechanical comparison |
 | Code-quality review | Most capable | Judgment call on naming, design, complexity |
 | Final reviewer | Most capable | Whole-PR-scope review |
-| Conformance / closure | Most capable | Whole-deliverable-vs-origin intent gate (`conformance-reviewer`; model set per-preset via `agentOverrides`, not call-site) |
+| Conformance / closure | Most capable | Whole-deliverable-vs-origin intent gate (`conformance-reviewer`; model from `piSuperpowers.closureReview.model`, injected call-site) |
 
 ```ts
 subagent({
@@ -117,7 +117,8 @@ subagent({ agent: "spec-reviewer", task: "<diff range + spec excerpt + ask: does
 subagent({ agent: "code-reviewer", task: "<diff range + ask: production-ready?>" })
 
 // closing-loop conformance (origin vs deliverable) — its OWN dispatch, never fused with code quality
-subagent({ agent: "conformance-reviewer", task: "<spec path + verbatim original prompt + full diff vs main; per conformance-check.md>" })
+// model from piSuperpowers.closureReview.model (read $PI_CODING_AGENT_DIR/settings.json); omit to inherit
+subagent({ agent: "conformance-reviewer", model: /* piSuperpowers.closureReview.model from config, else omit to inherit */, task: "<spec path + verbatim original prompt + full diff vs main; per conformance-check.md>" })
 ```
 
 Prompt templates live alongside this SKILL.md:
