@@ -53,22 +53,24 @@ Replace the placeholders above with patterns specific to your fork — company n
 
 ### Agents
 
-Five agents ship in `agents/`: `implementer`, `code-reviewer`, `spec-reviewer`, plus `spec-council-member` and `spec-council-synthesizer` (dispatched only by `/skill:roasting-the-spec`, never directly). Body text becomes the child's system prompt (`systemPromptMode: replace`).
+Six agents ship in `agents/`: `implementer`, `code-reviewer`, `spec-reviewer`, and `conformance-reviewer`, plus `spec-council-member` and `spec-council-synthesizer` (dispatched only by `/skill:roasting-the-spec`, never directly). `conformance-reviewer` is the closing-loop intent gate, dispatched by the verify step of `subagent-driven-development` / `executing-plans` / `verification-before-completion` and surfaced before finish in `finishing-a-development-branch`. Body text becomes the child's system prompt (`systemPromptMode: replace`).
 
 Frontmatter knobs are **not overridable** at `subagent()` call time, so pick them carefully:
 
-| Knob | implementer | code-reviewer | spec-reviewer | spec-council-member | spec-council-synthesizer |
-|---|---|---|---|---|---|
-| `tools` | `read, write, edit, bash, grep, find, ls` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` |
-| `thinking` | `medium` | `high` | `high` | `xhigh` | `xhigh` |
-| `defaultContext` | `fork` | `fresh` | `fresh` | `fresh` | `fresh` |
-| `inheritProjectContext` | `true` | `true` | `true` | `true` | `true` |
-| `inheritSkills` | `false` | `false` | `false` | `false` | `false` |
-| `completionGuard` | `true` | `false` | `false` | `false` | `false` |
+| Knob | implementer | code-reviewer | spec-reviewer | conformance-reviewer | spec-council-member | spec-council-synthesizer |
+|---|---|---|---|---|---|---|
+| `tools` | `read, write, edit, bash, grep, find, ls` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` |
+| `thinking` | `medium` | `high` | `high` | `xhigh` | `xhigh` | `xhigh` |
+| `defaultContext` | `fork` | `fresh` | `fresh` | `fresh` | `fresh` | `fresh` |
+| `inheritProjectContext` | `true` | `true` | `true` | `true` | `true` | `true` |
+| `inheritSkills` | `false` | `false` | `false` | `false` | `false` | `false` |
+| `completionGuard` | `true` | `false` | `false` | `false` | `false` | `false` |
 
 Rationale: reviewers are read-only and skeptical (fresh context, no edit tools, high thinking budget). Implementer continues the parent's session (fork) but doesn't need to recurse into skill discovery (inheritSkills: false avoids dispatch loops). `inheritProjectContext: true` lets agents adapt to the consumer's `AGENTS.md`.
 
 The two `spec-council-*` agents are the reviewer profile pushed to `thinking: xhigh`; they carry no `model:` — `/skill:roasting-the-spec` injects it per task (members from `piSuperpowers.specCouncil.members`, the chair from `specCouncil.chair`), so no model is baked into the persona.
+
+`conformance-reviewer` is the reviewer profile (fresh, read-only, skeptical) pushed to `thinking: xhigh` because it is the **last correctness gate** — the closing loop that confronts the assembled deliverable against the *origin* (spec + verbatim prompt), not the plan. Like the council agents it carries **no `model:`**; each preset pins it via `settings.json#subagents.agentOverrides.conformance-reviewer`, so every profile points the gate at the strongest reasoning model its providers can reach (`applyCustomAgentOverride` fills the unset `model`; the frontmatter-pinned `thinking`/`defaultContext` are not overridable). It diverges from `code-reviewer` deliberately: code-reviewer's priorities and output are code-quality (Correctness/Tests/Security/… → severity-ranked bug list), whereas conformance-reviewer's are requirement coverage and intent fidelity (→ per-requirement DELIVERED/PARTIAL/MISSING/DRIFTED/UNAUTHORIZED verdict). Dispatch it as its **own** call; never fuse it into the whole-PR code review.
 
 If you must override at call site, the only callable knobs are `model`, `task`, `output`, `reads`, `progress`, `skill` — frontmatter wins for the rest.
 

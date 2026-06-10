@@ -9,7 +9,7 @@ description: Use when implementation is complete, all tests pass, and you need t
 
 Guide completion of development work by presenting clear options and handling chosen workflow.
 
-**Core principle:** Verify tests → Detect environment → Present options → Execute choice → Clean up.
+**Core principle:** Verify tests → Detect environment → Surface closure → Present options → Execute choice → Clean up.
 
 **Announce at start:** "I'm using the finishing-a-development-branch skill to complete this work."
 
@@ -74,6 +74,24 @@ git merge-base HEAD main 2>/dev/null || git merge-base HEAD master 2>/dev/null
 ```
 
 Or ask: "This branch split from main - is that correct?"
+
+### Step 3.5: Surface Closure / Conformance Status
+
+Before presenting finish options, surface the closing-loop conformance result as **its own section** — the user is about to choose how to ship, and they need to see whether the deliverable matches what was *asked*, not just whether tests pass. Tests prove the code runs; conformance proves it does what was requested. Different gates.
+
+- **If the execution flow already closed the loop** (the `conformance-reviewer` ran in the `subagent-driven-development` / `executing-plans` verify gate), restate its verdict here: `CONFORMS`, or the `GAPS` and how each was dispositioned (fixed / accepted-and-recorded-in-spec / rescoped).
+- **If no conformance check has run in this flow** (e.g., ad-hoc work that landed without an execution skill), say so plainly and offer to run it now — dispatch a fresh-context `conformance-reviewer` against the origin (spec + verbatim prompt + full diff vs base) per `verification-before-completion/reference/conformance-check.md`. Closing the loop is cheap relative to shipping unverified intent.
+- **Unreconciled gaps are a blocker, not a footnote.** Do not bury them inside the options menu. If any gap is still open, resolve it (or get explicit user acceptance recorded in the spec) before offering Option 1 (squash-merge) or Option 2 (PR).
+
+Present it as a distinct line the user reads before choosing:
+
+```
+Closure / conformance: CONFORMS
+  (or: GAPS — <n> open)
+  - <gap> → proposed remediation: <one line>   [if any open]
+```
+
+Then continue to Step 4.
 
 ### Step 4: Present Options
 
@@ -281,6 +299,7 @@ phase_tracker({ action: "complete", phase: "ship" })
 - Remove a worktree before confirming merge success
 - Clean up worktrees you didn't create (provenance check)
 - Run `git worktree remove` from inside the worktree
+- Present finish options while a conformance gap is open and undispositioned
 
 **Always:**
 - Verify tests before offering options
@@ -290,6 +309,7 @@ phase_tracker({ action: "complete", phase: "ship" })
 - Clean up worktree for Options 1 & 4 only
 - `cd` to main repo root before worktree removal
 - Run `git worktree prune` after removal
+- Surface the closure / conformance verdict as its own section before the options menu
 
 ## Project overrides
 

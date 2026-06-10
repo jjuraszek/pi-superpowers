@@ -21,12 +21,24 @@ different reference points.
 ## Dispatch a fresh reviewer (primary path)
 
 The main session built the thing — it has confirmation bias. Delegate the check
-to a fresh-context reviewer (`code-reviewer`) that reads the requirements vs the
-diff cold. It cannot see session history, so pass in:
+to a fresh-context **`conformance-reviewer`** — a persona built for exactly this
+gate: its priorities are requirement coverage and intent fidelity, not code
+quality, and it emits a per-requirement coverage verdict rather than a bug list.
+It reads the requirements vs the diff cold and cannot see session history, so
+pass in:
 
 - The **spec** (path).
 - The **original prompt** (verbatim — it holds inline requirements + any ticket ref).
 - The **diff** to audit (code + docs).
+
+Dispatch it as its **own** call — do not fold the conformance check into the
+whole-PR code-quality review. Fusing the two subordinates intent-coverage to a
+code-quality system prompt and compresses the conformance result to an
+afterthought. Code quality is one dispatch; conformance is another.
+
+The persona ships model-free; its model is set per-harness via
+`settings.json#subagents.agentOverrides.conformance-reviewer`. Point it at the
+strongest reasoning model the preset can reach — this is the last correctness gate.
 
 Self-checking in the main session is the fallback when delegation isn't possible.
 
@@ -59,6 +71,22 @@ comments, or inline in the prompt). Source and solution must end in sync.
 
 Multi-spec effort → allowed **only if the spec explicitly says** it covers a
 defined subset and names the deferred requirements. Silent partial coverage = failure.
+
+## When the check finds gaps
+
+The reviewer **proposes, it does not dispose.** It reports coverage plus a
+remediation *direction* per gap; it never edits and never decides what happens
+next. Disposition is the user's call, surfaced by the orchestrator:
+
+- **CONFORMS** → record the verdict in the completion summary's closure section and proceed.
+- **GAPS** → do **not** auto-proceed and do **not** auto-fix. Surface each gap to
+  the user with the reviewer's proposed remediation, and let them choose per gap:
+  - **Fix now** — dispatch an implementer with the gap as the task, then re-run the check.
+  - **Accept + record** — fold the deviation into the spec as a deliberate, dated decision; once recorded it is no longer drift.
+  - **Rescope / defer** — record it in the spec as an explicit out-of-scope / deferred requirement.
+
+No completion claim stands over an unreconciled gap. "Surface, don't auto-fix":
+the orchestrator presents options, the user decides.
 
 ## Checklist
 

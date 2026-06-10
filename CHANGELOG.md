@@ -1,5 +1,15 @@
 # Changelog
 
+## v1.2.0 — 2026-06-09
+
+Add a dedicated `conformance-reviewer` persona for the closing-loop intent gate, replacing the reuse of `code-reviewer` for conformance. Session audits showed the closure check was being **fused into the whole-PR code review** on a single `code-reviewer` dispatch: the code-quality system prompt dominated, the conformance result was compressed to a one-line afterthought, and the gate ran on whatever model `agentOverrides.code-reviewer` pinned (mid-tier) rather than the strongest available.
+
+- **New agent `conformance-reviewer`** (`agents/conformance-reviewer.md`): the reviewer profile (fresh context, read-only, skeptical) at `thinking: xhigh`, framed for **requirement coverage and intent fidelity** — confront the delivered code+docs against the *origin* (spec + verbatim prompt), skipping the plan. Output is a per-requirement coverage verdict (`DELIVERED/PARTIAL/MISSING/DRIFTED/UNAUTHORIZED` → `CONFORMS`/`GAPS`), not a bug-severity list. Ships **model-free**: pin per preset via `settings.json#subagents.agentOverrides.conformance-reviewer` so each profile uses the strongest reasoning model its providers can reach. **Consumers must add this override after upgrading** — with no override the agent falls back to the harness default model.
+- **Gap protocol (propose, don't dispose).** The reviewer reports gaps plus a remediation *direction*; it never edits and never decides. On `GAPS` the orchestrator surfaces each gap to the user, who chooses per gap: fix now / accept + record in spec / rescope. No completion claim stands over an unreconciled gap. Documented in `reference/conformance-check.md`.
+- **Dispatch is now its own call, never fused with code review.** `subagent-driven-development` (After-All-Tasks step 3), `executing-plans` (Step 5), and `reference/conformance-check.md` dispatch `conformance-reviewer` separately from the whole-PR `code-reviewer`.
+- **Closure gets its own section before finishing.** `subagent-driven-development` step 4 summary and a new `finishing-a-development-branch` Step 3.5 surface the conformance verdict as a first-class line *before* the merge/PR/keep/discard menu; unreconciled gaps block the options rather than hiding in them.
+- **Docs:** README (6 personas + per-preset `Conformance gate model` config) and `AGENTS.md` (roster, knobs table column, divergence rationale).
+
 ## v1.1.6 — 2026-06-08
 
 Extend the v1.1.5 conformance close-out to `executing-plans` for parity. Its per-task verification already routes through `/skill:verification-before-completion` (so per-slice conformance was covered), but its Step 5 self-audit before finishing was plan-vs-code only — no fresh-reviewer pass confronted the *assembled* deliverable against the origin.

@@ -92,6 +92,7 @@ Pi-subagents accepts a per-task `model` override. Use it.
 | Spec review | Default | Reads diff + spec, mechanical comparison |
 | Code-quality review | Most capable | Judgment call on naming, design, complexity |
 | Final reviewer | Most capable | Whole-PR-scope review |
+| Conformance / closure | Most capable | Whole-deliverable-vs-origin intent gate (`conformance-reviewer`; model set per-preset via `agentOverrides`, not call-site) |
 
 ```ts
 subagent({
@@ -114,6 +115,9 @@ subagent({ agent: "spec-reviewer", task: "<diff range + spec excerpt + ask: does
 
 // code quality
 subagent({ agent: "code-reviewer", task: "<diff range + ask: production-ready?>" })
+
+// closing-loop conformance (origin vs deliverable) — its OWN dispatch, never fused with code quality
+subagent({ agent: "conformance-reviewer", task: "<spec path + verbatim original prompt + full diff vs main; per conformance-check.md>" })
 ```
 
 Prompt templates live alongside this SKILL.md:
@@ -188,8 +192,8 @@ For the fan-out + worktree + patch-integration + conflict mechanics, see `dispat
 0. Call `phase_tracker({ action: "start", phase: "verify" })`. (The `implement` phase auto-advances from `plan_tracker`; this flow runs its own verify gate instead of `/skill:verification-before-completion`, so it must mark the phase itself.)
 1. Dispatch the final reviewer over the full diff (already covered in [The Process](#the-process) step "After all tasks").
 2. **Run an audit pass automatically.** Run `/skill:requesting-code-review` against the worktree's full diff vs `main`. Then, if the project ships a project-specific audit skill (e.g., `.agents/skills/self-audit/`), run it as an optional supplement (it adds project-specific checks and fixes, not a replacement). Address Critical and Moderate findings before handoff. Do not ask the user — just run it.
-3. **Close the loop — conformance check.** The audit in step 2 is plan-vs-code (single-step); it inherits any requirement the plan already dropped. Before marking verify complete, dispatch a fresh-context `code-reviewer` to confront the deliverable (code **and** docs) against the *origin* — the spec **and** the original prompt — per `verification-before-completion/reference/conformance-check.md`. Pass the spec path, the verbatim original prompt, and the full diff. Reconcile any drift before proceeding (unrecorded divergence = conformance failure, not a completion). When the conformance check clears, call `phase_tracker({ action: "complete", phase: "verify" })`.
-4. Summarize what was implemented (tasks completed, files changed, test counts, self-audit verdict).
+3. **Close the loop — conformance check.** The audit in step 2 is plan-vs-code (single-step); it inherits any requirement the plan already dropped. Before marking verify complete, dispatch a fresh-context **`conformance-reviewer`** — its **own** dispatch, never fused into the step-1 final review — to confront the deliverable (code **and** docs) against the *origin* — the spec **and** the original prompt — per `verification-before-completion/reference/conformance-check.md`. Pass the spec path, the verbatim original prompt, and the full diff. On `GAPS`, do not auto-fix or auto-proceed: surface each gap with the reviewer's proposed remediation and let the user decide (fix now → re-dispatch implementer / accept + record in spec / rescope), then re-check. Only when the verdict is `CONFORMS` (or every gap is dispositioned) call `phase_tracker({ action: "complete", phase: "verify" })`.
+4. Summarize what was implemented (tasks completed, files changed, test counts, self-audit verdict). Give the closing loop its **own section** — `Closure / conformance: CONFORMS` (or `GAPS` with each gap and its disposition) — so the user sees intent-fidelity as a first-class line before any finishing decision, not buried in the audit verdict.
 5. Ask: "All tasks complete and self-audited. Ready for finishing?"
 6. **Wait for user confirmation** before invoking `/skill:finishing-a-development-branch`. The user may want to test manually or adjust scope.
 
