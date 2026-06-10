@@ -37,7 +37,13 @@ This skill ends with a **written, user-reviewed spec inside a worktree**. Nothin
 
 Work through the items below **in order**. This is your own checklist to follow, not a `plan_tracker` plan — brainstorming is open-ended exploration, and `plan_tracker` is execution-only (the implement phase). The terminal state is the user review gate; after approval the **only** next skill is `/skill:writing-plans`. Do not jump to implementation, and do not silently drop the council offer.
 
-1. **Start brainstorm tracking** — call `phase_tracker({ action: "start", phase: "brainstorm" })` as the **first action on entry**, before reading code, setting up the worktree, or answering the user. It is idempotent: re-entering while brainstorm is already in-progress is a safe no-op.
+1. **Start brainstorm tracking (fresh epoch)** — as the **first action on entry**, before reading code, setting up the worktree, or answering the user, reset **both** trackers and then start the phase. A new brainstorm is a new flow, so it owns a clean slate — clear any stale phases *and* tasks left in the session by earlier work:
+   ```
+   phase_tracker({ action: "reset" })   // clears all phases
+   plan_tracker({ action: "clear" })    // clears all tasks
+   phase_tracker({ action: "start", phase: "brainstorm" })
+   ```
+   Re-entering while a brainstorm is already in progress is safe: mid-brainstorm there are no tasks or later phases to lose, so the reset just re-establishes the same clean slate.
 2. **Set up the worktree** — see [Worktree First](#worktree-first)
 3. **Explore project context** — files, docs, recent commits, current behaviour
 4. **Ask clarifying questions** — one at a time

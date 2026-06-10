@@ -32,6 +32,8 @@ If a tool result contains a ⚠️ workflow warning, stop immediately and addres
 ### Step 2: Execute Batch
 **Default: First 3 tasks**
 
+Before the first batch, enter the implement phase: `phase_tracker({ action: "start", phase: "implement" })` — `plan_tracker` auto-completes it once every task is done.
+
 For each task:
 1. Update task status via `plan_tracker` tool
 2. Follow each step exactly (plan has bite-sized steps)

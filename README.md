@@ -154,7 +154,7 @@ A tool, not a hook. Skills call `plan_tracker({ action: "init" | "update" | "sta
 
 ### `phase-tracker`
 
-A tool, not a hook. Skills call `phase_tracker({ action: "start" | "complete" | "skip" | "status" | "reset", phase?, reason? })` to track workflow phase progress. A TUI widget shows the five-phase pipeline: `○ brainstorm → ○ plan → ○ implement → ○ verify → ○ ship`. State branches with the session, no config needed.
+A tool, not a hook. Skills call `phase_tracker({ action: "start" | "complete" | "skip" | "status" | "reset", phase?, reason? })` to track workflow phase progress. A TUI widget shows the five-phase pipeline: `○ brainstorm → ○ plan → ○ implement → ○ verify → ○ ship`. State branches with the session, no config needed. Phases are entered **explicitly** by the phase-owning skills, so outside a superpowers flow the widget stays dormant. The `brainstorming` skill resets both trackers on entry (new flow, clean slate); `implement` auto-completes from `plan-tracker` once a skill has started it.
 
 Distinct from `plan-tracker`: `phase-tracker` answers "what stage of the workflow am I in?"; `plan-tracker` answers "which task within the current stage am I on?"
 

@@ -55,6 +55,8 @@ subagent-driven-development runs **sequentially by default**; when the plan grou
 
 ## The Process
 
+Before the first task, enter the implement phase: `phase_tracker({ action: "start", phase: "implement" })` — you hold this phase for the parent session while the per-task work is dispatched to subagents; `plan_tracker` auto-completes it once every task is done.
+
 For each task in `plan_tracker`:
 
 1. **Dispatch implementer.** Pass the full task text + scene-setting context. Don't make the subagent re-read the plan.
@@ -131,6 +133,8 @@ Prompt templates live alongside this SKILL.md:
 
 Chosen at handoff (option 2) when the plan groups tasks into **waves** (see `writing-plans`). Waves run in sequence; within a wave, file-disjoint tasks run concurrently in isolated worktrees, integrated serially behind one test + review gate. The sequential [Process](#the-process) above is the default and the fallback; this mode is the deliberate, worktree-isolated exception to the "no parallel implementers" red flag.
 
+**Enter the implement phase first.** Before the first wave, call `phase_tracker({ action: "start", phase: "implement" })` (as in [The Process](#the-process)); `plan_tracker` auto-completes it once every task across all waves is done.
+
 **Progress tracking (`plan_tracker`).** `plan_tracker` is a flat list with no native group concept, so waves are *encoded*, not modeled:
 
 - **Init once, wave-ordered:** `init` with every task across all waves in wave order, each name prefixed with its wave (`"W1: <title>"`, `"W2: <title>"`, …). Indices are positional and stable; never re-init mid-run (it drops statuses).
@@ -190,7 +194,7 @@ For the fan-out + worktree + patch-integration + conflict mechanics, see `dispat
 
 ## After All Tasks Complete
 
-0. Call `phase_tracker({ action: "start", phase: "verify" })`. (The `implement` phase auto-advances from `plan_tracker`; this flow runs its own verify gate instead of `/skill:verification-before-completion`, so it must mark the phase itself.)
+0. Call `phase_tracker({ action: "start", phase: "verify" })`. (The `implement` phase was started at execution start and auto-completes from `plan_tracker` once all tasks are done; this flow runs its own verify gate instead of `/skill:verification-before-completion`, so it must mark verify itself.)
 1. Dispatch the final reviewer over the full diff (already covered in [The Process](#the-process) step "After all tasks").
 2. **Run an audit pass automatically.** Run `/skill:requesting-code-review` against the worktree's full diff vs `main`. Then, if the project ships a project-specific audit skill (e.g., `.agents/skills/self-audit/`), run it as an optional supplement (it adds project-specific checks and fixes, not a replacement). Address Critical and Moderate findings before handoff. Do not ask the user — just run it.
 3. **Close the loop — conformance check.** The audit in step 2 is plan-vs-code (single-step); it inherits any requirement the plan already dropped. Before marking verify complete, dispatch a fresh-context **`conformance-reviewer`** — its **own** dispatch, never fused into the step-1 final review — to confront the deliverable (code **and** docs) against the *origin* — the spec **and** the original prompt — per `verification-before-completion/reference/conformance-check.md`. Pass the spec path, the verbatim original prompt, and the full diff. On `GAPS`, do not auto-fix or auto-proceed: surface each gap with the reviewer's proposed remediation and let the user decide (fix now → re-dispatch implementer / accept + record in spec / rescope), then re-check. Only when the verdict is `CONFORMS` (or every gap is dispositioned) call `phase_tracker({ action: "complete", phase: "verify" })`.

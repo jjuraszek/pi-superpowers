@@ -1,5 +1,14 @@
 # Changelog
 
+## v1.3.0 — 2026-06-09
+
+Make phase tracking explicit and scoped to superpowers flows, and reset both trackers when a new brainstorm begins.
+
+- **Phase tracker no longer fabricates the `implement` phase from `plan_tracker` activity.** The plan→phase derivation now only *completes* an `implement` phase a skill explicitly started; it never auto-starts one. Effect: ad-hoc `plan_tracker` use outside a superpowers flow no longer lights up a lone, misleading `implement` phase — the phase widget stays dormant until a phase-owning skill starts a phase. Tasks (`plan-tracker`) are unaffected and still track standalone.
+- **Executors enter the implement phase explicitly.** `subagent-driven-development` (sequential **and** parallel-wave) and `executing-plans` call `phase_tracker start implement` before the first task/wave, replacing the removed auto-start; `plan_tracker` still auto-completes the phase when every task is done. `test-driven-development` already did this.
+- **`brainstorming` resets both trackers on entry.** Step 1 now calls `phase_tracker reset` **and** `plan_tracker clear` before `start brainstorm` — a new brainstorm is a new flow, so stale phases and tasks from earlier work in the same session are cleared.
+- **Docs:** README phase-tracker note. No config or API changes.
+
 ## v1.2.1 — 2026-06-09
 
 Move the `conformance-reviewer` model config from `subagents.agentOverrides.conformance-reviewer` to `piSuperpowers.closureReview.model`, injected **call-site** by the verify-step skills — the same mechanism the spec-council chair uses. Consolidates all pi-superpowers quality-lever model config under the `piSuperpowers.*` namespace (council + closure gate discoverable in one place) and gives the gate's model call-site precedence.

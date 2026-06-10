@@ -98,21 +98,14 @@ function formatStatus(phases: PhaseMap): string {
 export default function (pi: ExtensionAPI) {
   let phases: PhaseMap = emptyPhases();
 
-  // Derive the implement phase from plan_tracker activity so it advances even
-  // when the execution path (SDD, executing-plans) dispatches the work to
-  // subagents and never invokes the phase-owning skill directly.
+  // Auto-complete the implement phase from plan_tracker once every task is done,
+  // but only when a skill has explicitly started it (TDD, or the SDD / executing-plans
+  // execution preamble). The tracker never *fabricates* implement from task activity:
+  // outside a superpowers flow (ad-hoc plan_tracker use) no phase is ever started, so
+  // the phase widget stays dormant. Phases are entered explicitly by the phase-owning
+  // skills; plan-tracker tracks tasks independently.
   const applyPlanActivity = (tasks?: { status: string }[]) => {
     if (!tasks || tasks.length === 0) return;
-    if (phases.implement.status === "pending") {
-      // plan_tracker is a generic task list the model also uses outside the
-      // implement phase (e.g. a brainstorming exploration checklist). Only treat
-      // it as an implement signal when no earlier phase is still active, mirroring
-      // the single-in_progress invariant the manual `start` action enforces.
-      // Otherwise brainstorm/plan and implement would both read as in_progress.
-      const otherActive = PHASES.some((p) => p !== "implement" && phases[p].status === "in_progress");
-      if (otherActive) return;
-      phases = { ...phases, implement: { status: "in_progress" } };
-    }
     if (phases.implement.status === "in_progress" && tasks.every((t) => t.status === "complete")) {
       phases = { ...phases, implement: { status: "complete" } };
     }
