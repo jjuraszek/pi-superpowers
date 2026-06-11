@@ -110,6 +110,24 @@ On a user install the six personas in `agents/` are symlinked into `getAgentDir(
 
 Target dir override: set `PI_SUPERPOWERS_AGENT_DIR` to force symlinking into a specific dir (leading `~` expanded; always symlink mode).
 
+### Thinking budgets
+
+`implementer`, `code-reviewer`, and `spec-reviewer` ship without `thinking:` in their frontmatter — pi-subagents `agentOverrides` only fill frontmatter-unset fields, so leaving it unset makes the budget a per-preset config knob. Set it in each preset's `settings.json` (use `false` on non-thinking models → provider default):
+
+```json
+{
+  "subagents": {
+    "agentOverrides": {
+      "implementer": { "thinking": "medium" },
+      "code-reviewer": { "thinking": "high" },
+      "spec-reviewer": { "thinking": "medium" }
+    }
+  }
+}
+```
+
+Unset → provider default thinking for that model. `conformance-reviewer` and the two `spec-council-*` personas stay frontmatter-pinned at `xhigh` and are not configurable — the gate and the council must run at max budget even when they inherit the session's model.
+
 ### Conformance gate model
 
 `conformance-reviewer` ships without a `model:` in its frontmatter — like the spec-council personas, its model is supplied per preset so each profile points the last correctness gate at the strongest reasoning model its providers can reach. The verify-step skills read it from `piSuperpowers.closureReview.model` and inject it **call-site** on the conformance dispatch (the same mechanism the spec-council chair uses). Add it to each preset's `settings.json`:

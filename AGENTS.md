@@ -55,18 +55,18 @@ Replace the placeholders above with patterns specific to your fork — company n
 
 Six agents ship in `agents/`: `implementer`, `code-reviewer`, `spec-reviewer`, and `conformance-reviewer`, plus `spec-council-member` and `spec-council-synthesizer` (dispatched only by `/skill:roasting-the-spec`, never directly). `conformance-reviewer` is the closing-loop intent gate, dispatched by the verify step of `subagent-driven-development` / `executing-plans` / `verification-before-completion` and surfaced before finish in `finishing-a-development-branch`. Body text becomes the child's system prompt (`systemPromptMode: replace`).
 
-Frontmatter knobs are **not overridable** at `subagent()` call time, so pick them carefully:
+Frontmatter knobs are **not overridable** at `subagent()` call time. Preset-level `subagents.agentOverrides.<agent>` config only **fills fields the frontmatter left unset** (pi-subagents `agents.ts`), so a frontmatter pin kills the config knob. Pick pins carefully:
 
 | Knob | implementer | code-reviewer | spec-reviewer | conformance-reviewer | spec-council-member | spec-council-synthesizer |
 |---|---|---|---|---|---|---|
 | `tools` | `read, write, edit, bash, grep, find, ls` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` | `read, grep, find, ls, bash` |
-| `thinking` | `medium` | `high` | `high` | `xhigh` | `xhigh` | `xhigh` |
+| `thinking` | — | — | — | `xhigh` | `xhigh` | `xhigh` |
 | `defaultContext` | `fork` | `fresh` | `fresh` | `fresh` | `fresh` | `fresh` |
 | `inheritProjectContext` | `true` | `true` | `true` | `true` | `true` | `true` |
 | `inheritSkills` | `false` | `false` | `false` | `false` | `false` | `false` |
 | `completionGuard` | `true` | `false` | `false` | `false` | `false` | `false` |
 
-Rationale: reviewers are read-only and skeptical (fresh context, no edit tools, high thinking budget). Implementer continues the parent's session (fork) but doesn't need to recurse into skill discovery (inheritSkills: false avoids dispatch loops). `inheritProjectContext: true` lets agents adapt to the consumer's `AGENTS.md`.
+Rationale: reviewers are read-only and skeptical (fresh context, no edit tools). `thinking` is deliberately **unset** on `implementer`/`code-reviewer`/`spec-reviewer` so each preset supplies it via `subagents.agentOverrides.<agent>.thinking` — consumers on non-thinking models set `false` (→ provider default). Recommended budgets: implementer `medium` (tasks are atomic, plan-driven), code-reviewer `high` (subtle-bug hunting), spec-reviewer `medium` (mechanical spec-vs-code check). `conformance-reviewer` and the council personas stay frontmatter-pinned at `xhigh`: the pin is intentional — the gate often inherits the main session's model (`closureReview.model` unset), and the persona must raise the budget to max regardless of preset config; the council is defined by max-budget critique. Implementer continues the parent's session (fork) but doesn't need to recurse into skill discovery (inheritSkills: false avoids dispatch loops). `inheritProjectContext: true` lets agents adapt to the consumer's `AGENTS.md`.
 
 The two `spec-council-*` agents are the reviewer profile pushed to `thinking: xhigh`; they carry no `model:` — `/skill:roasting-the-spec` injects it per task (members from `piSuperpowers.specCouncil.members`, the chair from `specCouncil.chair`), so no model is baked into the persona.
 

@@ -2,7 +2,6 @@
 name: code-reviewer
 description: Production-readiness code review with prioritized findings (Critical blocks merge, Minor is a nit). Read-only — does not edit.
 tools: read, grep, find, ls, bash
-thinking: high
 defaultContext: fresh
 inheritProjectContext: true
 inheritSkills: false

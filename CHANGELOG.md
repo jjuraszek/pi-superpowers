@@ -1,5 +1,14 @@
 # Changelog
 
+## v2.0.0 — 2026-06-11
+
+Make the thinking budget a per-preset config knob for the working agents. pi-subagents `agentOverrides` only fill fields the frontmatter left **unset** (`agents.ts` fill semantics), so the previous frontmatter pins silently swallowed any `subagents.agentOverrides.<agent>.thinking` a preset supplied — and made it impossible to run the personas on non-thinking models.
+
+- **Breaking: `thinking:` removed from `implementer`, `code-reviewer`, `spec-reviewer` frontmatter.** Presets now own the budget via `subagents.agentOverrides.<agent>.thinking`; `false` → provider default (non-thinking models). Unset → provider default for the resolved model.
+- **Migration:** add to each preset's `settings.json` — recommended `implementer: medium`, `code-reviewer: high`, `spec-reviewer: medium`. Without overrides the agents no longer run at the previously pinned levels.
+- **`conformance-reviewer` and council personas unchanged.** All three stay frontmatter-pinned at `xhigh` — intentional: the gate often inherits the main session's model (`closureReview.model` unset) and must still run at max budget; the council is defined by max-budget critique. v1.2.1's "thinking stays frontmatter-pinned" guarantee for the gate still holds.
+- **Docs:** README "Thinking budgets" section; AGENTS.md knobs table + rationale.
+
 ## v1.3.0 — 2026-06-09
 
 Make phase tracking explicit and scoped to superpowers flows, and reset both trackers when a new brainstorm begins.
