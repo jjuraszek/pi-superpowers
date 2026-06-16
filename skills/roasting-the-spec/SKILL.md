@@ -55,14 +55,19 @@ mktemp -d   # absolute path, e.g. /tmp/tmp.XXXXXX
 Dispatch one member per configured model, in parallel, each writing its critique into that dir. Do **not** read these files yourself — they are for the chair.
 
 ```
-subagent({ tasks: members.map((model, i) => ({
-  agent: "spec-council-member",
-  model,
-  task: "Problem statement: <the problem the spec addresses, from its Context section and the user's stated intent>.\n" +
-        "Read the spec at <abs path to doc/specs/...>. Critique it on your five axes and emit your template.",
-  output: "<tmpdir>/member-" + i + "-" + slug(model) + ".md"
-})) })
+subagent({
+  control: { needsAttentionAfterMs: 600000 },
+  tasks: members.map((model, i) => ({
+    agent: "spec-council-member",
+    model,
+    task: "Problem statement: <the problem the spec addresses, from its Context section and the user's stated intent>.\n" +
+          "Read the spec at <abs path to doc/specs/...>. Critique it on your five axes and emit your template.",
+    output: "<tmpdir>/member-" + i + "-" + slug(model) + ".md"
+  }))
+})
 ```
+
+`control` is a **run-level** field: it must sit beside `tasks`, not inside the `members.map(...)` task objects (the per-task schema has no `control` field and would silently drop it). The 10-minute `needsAttentionAfterMs` suppresses false-positive "no observed activity" idle notices — members do one long, tool-less reasoning turn that crosses the 60s default with zero activity events — while still letting a genuinely wedged run surface eventually.
 
 `slug(model)` = the model string with `/` and any other non-alphanumeric character replaced by `-` (so `provider/model` → `provider-model`); the chair recovers this slug from each filename for `raised-by` attribution. Relative `output:` paths in parallel mode resolve against the worktree and would get committed — always use the absolute temp dir.
 
@@ -76,6 +81,7 @@ Dispatch the chair once. It reads the member files (not you), the spec, and the 
 subagent({
   agent: "spec-council-synthesizer",
   model: <chair from config, else omit to inherit>,
+  control: { needsAttentionAfterMs: 600000 },
   reads: [ <the member file paths under the temp dir> ],
   task: "Problem statement: <paste>. Spec: <abs path>.\n" +
         "Member critiques (already injected via reads — do not search for them):\n" +
@@ -83,6 +89,8 @@ subagent({
         "Consolidate and adjudicate the member critiques."
 })
 ```
+
+The chair runs one long single-turn synthesis (one observed false positive ran 506s); `control: { needsAttentionAfterMs: 600000 }` raises the idle threshold to 10 minutes so the healthy run is not flagged stale, without disabling attention tracking entirely.
 
 List the exact member paths in the task text. The `reads:` array injects their contents, but the chair's prompt expects the paths explicitly; without them it scans the tree for `*.md` and stalls.
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.0.2 — 2026-06-16
+
+**Fix:** `roasting-the-spec` now passes `control: { needsAttentionAfterMs: 600000 }` on both the member fan-out and the chair dispatch, suppressing false-positive "needs attention (no observed activity for Xs)" notices on the spec council.
+
+- **Root cause.** pi-subagents' subagent-control derives `needs_attention` from `now - lastActivityAt`, and `lastActivityAt` advances only on discrete child events (`tool_execution_start/end`, `tool_result_end`, `message_end`) — there is no in-turn/streaming signal. Council members and the chair each run one long, tool-less reasoning turn, so they cross the 60s default with zero activity events and get flagged stale despite being healthy (observed 180 false positives; one real turn ran 506s).
+- **Fix placement.** `control` is a **run-level** param: `resolveControlConfig` reads only top-level `effectiveParams.control`, and the parallel per-task schema (`TaskItem`) has no `control` field. So the override sits beside `tasks` on the member call (not inside `members.map(...)`, where it would be silently dropped) and beside `agent`/`model`/`reads` on the single chair call.
+- **10 min, not disabled.** Raising the idle threshold to 600000 ms keeps attention tracking on so a genuinely wedged run can still surface.
+- **Skill-only.** No pi-subagents change.
+
 ## v3.0.1 — 2026-06-15
 
 **Fix:** `plan-tracker` snapshots no longer alias live `Task` objects. The stored `details.tasks` is now a deep copy (`tasks.map((t) => ({ ...t }))`) at every result site, and `reconstructState` clones on read instead of binding the module array to a persisted snapshot.
