@@ -50,7 +50,7 @@ Work through the items below **in order**. This is your own checklist to follow,
 5. **Propose 2-3 approaches** — with trade-offs and a recommendation
 6. **Present the design** — in sections, get approval after each
 7. **Write the spec** — to `doc/specs/` (see [Filename Convention](#filename-convention))
-8. **Spec self-review (lint)** — placeholder scan + internal consistency, run inline
+8. **Spec self-review (lint)** — placeholder scan + internal consistency + documentation named, run inline
 9. **Critique pass (auto-dispatched)** — scope + ambiguity; the spec council via `/skill:roasting-the-spec` when `members` is configured, else a fresh `worker` (see [Spec Council](#spec-council-optional))
 10. **Re-run placeholder scan** — after the critique pass returns, re-scan for placeholders its edits may have introduced; surface any ambiguity the worker could not safely resolve at the user gate
 11. **User review gate** — user reviews the committed spec
@@ -139,6 +139,7 @@ Cover at minimum:
 - Data flow (or request flow)
 - Error handling and edge cases
 - Testing approach
+- Documentation impact — name each doc that changes (README, AGENTS.md, CHANGELOG, API contracts, inline docs), or write "none". Doc updates ship in the same commit and are verified against the spec by the conformance gate.
 
 Be ready to go back and clarify when something doesn't make sense.
 
@@ -182,14 +183,15 @@ Spec lives in the project's `doc/specs/` (see [Project Routing](#project-routing
 
 ## Spec Self-Review (Before User Review Gate)
 
-After writing the spec to `<project>/doc/specs/<filename>.md` (per [Filename Convention](#filename-convention)) and before showing it to the user, run a self-review pass. **Read all four bullets first, then act:** only the **first two** run here at the main loop (the inline lint); the **last two** (scope + ambiguity) do **not** run inline — they are the dispatched critique pass (checklist item 9). Do not apply scope/ambiguity edits yourself.
+After writing the spec to `<project>/doc/specs/<filename>.md` (per [Filename Convention](#filename-convention)) and before showing it to the user, run a self-review pass. **Read all five bullets first, then act:** only the **first three** run here at the main loop (the inline lint); the **last two** (scope + ambiguity) do **not** run inline — they are the dispatched critique pass (checklist item 9). Do not apply scope/ambiguity edits yourself.
 
 - **Placeholder scan.** Any `TODO`, `TBD`, `<fill in>`, `[example]`, `xxx`? Either resolve them or convert to explicit "Open Questions" with names.
 - **Internal consistency.** Does Section 4 contradict Section 2? Are component names and field names consistent throughout?
+- **Documentation named.** Does the spec state which docs change (or an explicit "none")?
 - **Scope check.** Does every paragraph serve the goal? Cut filler. If something is out of scope, say it's out of scope.
 - **Ambiguity check.** Is every "we should…" backed by a concrete decision? Replace "we could probably" with "we will" or "we won't".
 
-The first two checks — **placeholder scan** and **internal consistency** — are the inline **lint**: run them here at the main loop and fix what they surface. The last two — **scope** and **ambiguity** — are **not** run inline; they are the **critique pass**, auto-dispatched (per [Spec Council](#spec-council-optional)):
+The first three checks — **placeholder scan**, **internal consistency**, and **documentation named** — are the inline **lint**: run them here at the main loop and fix what they surface. The last two — **scope** and **ambiguity** — are **not** run inline; they are the **critique pass**, auto-dispatched (per [Spec Council](#spec-council-optional)):
 
 - **Council configured** (`piSuperpowers.specCouncil.members` non-empty) → invoke `/skill:roasting-the-spec`; it runs the critique and proposes dispositions.
 - **Otherwise** → dispatch one fresh `worker` that applies the scope + ambiguity checks and fixes them in place:

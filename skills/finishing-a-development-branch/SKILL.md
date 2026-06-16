@@ -38,16 +38,11 @@ Tests failing (<N> failures). Must fix before completing:
 Cannot proceed with Options 1–3 until tests pass.
 ```
 
-Stop. Don't proceed to Step 1.5.
+Stop. Don't proceed to Step 2.
 
-**If tests pass:** Continue to Step 1.5.
+**If tests pass:** Continue to Step 2.
 
-### Step 1.5: Documentation and Learnings
-
-Ask two questions before presenting the menu:
-
-1. **"Does this work require documentation updates?"** (README, AGENTS.md, CHANGELOG, API contracts, inline docs.) If yes, make the updates first — they belong in the same squash commit, not a follow-up.
-2. **"What was learned during this implementation?"** (Surprises, codebase-specific knowledge, things to do differently next time.) Capture anything worth remembering before context is lost.
+No documentation prompt here: doc impact is decided at spec time (`/skill:brainstorming` section 6) and has already shipped in the diff by the time you reach finishing.
 
 ### Step 2: Detect Environment
 

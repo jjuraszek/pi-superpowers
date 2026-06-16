@@ -192,8 +192,7 @@ For the fan-out + worktree + patch-integration + conflict mechanics, see `dispat
 2. **Run an audit pass automatically.** Run `/skill:requesting-code-review` against the worktree's full diff vs `main`. Then, if the project ships a project-specific audit skill (e.g., `.agents/skills/self-audit/`), run it as an optional supplement (it adds project-specific checks and fixes, not a replacement). Address Critical and Moderate findings before handoff. Do not ask the user — just run it.
 3. **Close the loop — conformance check.** The audit in step 2 is plan-vs-code (single-step); it inherits any requirement the plan already dropped. Before marking verify complete, dispatch a fresh-context **`conformance-reviewer`** — its **own** dispatch, never fused into the step-1 final review — to confront the deliverable (code **and** docs) against the *origin* — the spec **and** the original prompt — per `verification-before-completion/reference/conformance-check.md`. Pass the spec path, the verbatim original prompt, and the full diff. On `GAPS`, do not auto-fix or auto-proceed: surface each gap with the reviewer's proposed remediation and let the user decide (fix now → re-dispatch implementer / accept + record in spec / rescope), then re-check. Only when the verdict is `CONFORMS` (or every gap is dispositioned) call `phase_tracker({ action: "complete", phase: "verify" })`.
 4. Summarize what was implemented (tasks completed, files changed, test counts, self-audit verdict). Give the closing loop its **own section** — `Closure / conformance: CONFORMS` (or `GAPS` with each gap and its disposition) — so the user sees intent-fidelity as a first-class line before any finishing decision, not buried in the audit verdict.
-5. Ask: "All tasks complete and self-audited. Ready for finishing?"
-6. **Wait for user confirmation** before invoking `/skill:finishing-a-development-branch`. The user may want to test manually or adjust scope.
+5. **Proceed to finishing — no confirmation prompt.** When the verdict is `CONFORMS` (or every gap is dispositioned), invoke `/skill:finishing-a-development-branch` immediately. Its Step 4 menu (squash / PR / keep / discard) is the human gate; a separate "ready to finish?" prompt only stacks a second stop in front of it. Open gaps are already owned by step 3, so nothing is left to decide here. Manual testing is a follow-up after the finishing choice (on `<base-branch>` after a squash-merge, or on the PR branch), never a reason to hold this gate.
 
 ## Red Flags — STOP
 
@@ -214,7 +213,7 @@ For the fan-out + worktree + patch-integration + conflict mechanics, see `dispat
 - `/skill:using-git-worktrees` — set up isolation first (small changes can branch in place with user approval)
 - `/skill:writing-plans` — creates the plan this skill executes
 - `/skill:requesting-code-review` — review template for reviewer subagents
-- `/skill:finishing-a-development-branch` — complete after all tasks (user-confirmed)
+- `/skill:finishing-a-development-branch` — invoked automatically once the conformance verdict is `CONFORMS` (or all gaps dispositioned)
 
 **Subagents follow by default:**
 - TDD — runtime warnings on source-before-test. Implementer agents receive the three-scenario TDD instructions (new feature / modifying tested code / trivial) via agent profile and prompt template.

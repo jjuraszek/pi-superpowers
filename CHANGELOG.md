@@ -1,5 +1,14 @@
 # Changelog
 
+## v3.1.0 — 2026-06-16
+
+Collapse the redundant end-of-flow gate and make documentation a spec-owned decision, so the chain has one human gate at finish instead of two stacked stops.
+
+- **`subagent-driven-development` no longer asks "Ready for finishing?".** Once the conformance verdict is `CONFORMS` (or every gap is dispositioned), it auto-invokes `/skill:finishing-a-development-branch`. That skill's Step 4 menu (squash / PR / keep / discard) is the genuine human gate; the prior "ready?" prompt only stacked a second stop in front of it. Open gaps are already owned by the step-3 conformance check, which surfaces them and waits. Manual testing is reframed as an always-follow-up (post-squash on base, or on the PR branch), never a reason to hold the gate.
+- **`finishing-a-development-branch` drops Step 1.5 (Documentation and Learnings).** The docs question is now redundant — doc impact is decided at spec time and ships in the diff — and the learnings question had no consuming memory system (dead output). Step references renumber accordingly.
+- **`brainstorming` makes documentation a first-class spec output.** Section 6 design coverage gains a "Documentation impact" item (name each doc that changes, or "none"); the self-review lint gains a "Documentation named" check (now five bullets, first three inline). This closes the loop: docs flow spec -> plan task (`writing-plans` already forces "which doc, or no") -> implementation -> conformance gate, so finishing never needs to re-ask.
+- **Skill-only.** No agent or extension changes.
+
 ## v3.0.2 — 2026-06-16
 
 **Fix:** `roasting-the-spec` now passes `control: { needsAttentionAfterMs: 600000 }` on both the member fan-out and the chair dispatch, suppressing false-positive "needs attention (no observed activity for Xs)" notices on the spec council.
