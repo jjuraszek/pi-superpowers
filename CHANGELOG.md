@@ -1,5 +1,12 @@
 # Changelog
 
+## v3.4.2 - 2026-06-29
+
+Sharpen the `code-reviewer` Simplicity dimension with an over-engineering tag taxonomy borrowed from the ponytail-review skill. Priority #6 was a single vague bullet ("Can the same outcome be reached with less code?") that produced soft, unactionable findings.
+
+- **Tag taxonomy on `code-reviewer` priority #6** (`agents/code-reviewer.md`). Each simplicity finding now carries one of `delete:` / `stdlib:` / `native:` / `yagni:` / `shrink:`, each pairing the cut with what replaces it (name the stdlib function, name the native feature, show the shorter form). Tags are explicitly independent of the Critical/Moderate/Minor severity axis. The `delete:` line carries an exception so a single smoke test / `assert`-based self-check is never flagged as bloat.
+- **`Complexity: net -<N> lines` added to the output format**, omitted when nothing is cuttable. Composes with (does not duplicate) consumer `AGENTS.md` liability discipline, which is inherited at runtime; the taxonomy supplies output format, not philosophy. The rest of ponytail (persona theming, intensity levels, gain/debt skills) was assessed and deliberately not ported - redundant with existing context and a poor fit for `implementer`'s fixed-scope rule.
+
 ## v3.4.1 - 2026-06-25
 
 Force the brainstorming user review gate to render the `spec-summarizer` output verbatim. A session dispatched the summarizer, received a full structured summary, then presented a self-authored paraphrase at the gate instead - dropping the summarizer's Scope/Outputs/Algorithm/Acceptance sections and three of four gap-footer entries.
