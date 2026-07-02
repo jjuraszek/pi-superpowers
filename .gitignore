@@ -3,5 +3,4 @@ node_modules/
 *.log
 
 .worktrees/
-.worktrees/
 package-lock.json

@@ -20,6 +20,13 @@
     "agents",
     "workflow"
   ],
+  "files": [
+    "skills",
+    "extensions",
+    "agents",
+    "bin",
+    "CHANGELOG.md"
+  ],
   "pi": {
     "skills": [
       "./skills"
@@ -30,6 +37,7 @@
   },
   "scripts": {
     "postinstall": "node ./bin/install-agents.mjs",
-    "link-agents": "node ./bin/install-agents.mjs"
+    "link-agents": "node ./bin/install-agents.mjs",
+    "test": "node scripts/ci.mjs"
   }
 }

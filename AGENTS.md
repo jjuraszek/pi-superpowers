@@ -24,6 +24,8 @@ Output **instead**:
 
 Bullets over prose. Short paragraphs. End on the ask, not a summary.
 
+Prefer ASCII. Use `-` not em/en-dashes; `...` not an ellipsis glyph; straight quotes not smart quotes. Reserve non-ASCII for a justified visual mark (status dot, a meaning-carrying arrow). Applies to every output - chat, comments, commits, docs, code. The LLM-readable exception below does NOT exempt it: it is typography, not structure.
+
 LLM-readable artifacts (`AGENTS.md`, `README.md`, `CHANGELOG.md`, skill bodies, agent personas, spec docs) stay structured. Use tables, headings, code blocks, explicit field references. Optimize for unambiguous retrieval.
 
 ## Code & Documentation Discipline
@@ -124,17 +126,24 @@ Edits in `~/repos/pi-gauntlet/skills/` and `~/repos/pi-gauntlet/extensions/` rel
 
 ## Release workflow
 
-pi-gauntlet publishes to npm as `pi-gauntlet` (public, unscoped).
+pi-gauntlet publishes to npm as `pi-gauntlet` (public, unscoped). The release is **tag-triggered and CI-executed** - never `npm publish` from a laptop.
+
+Use the repo-local **`release` skill** (`.agents/skills/release/SKILL.md`), driven by `.agents/skills/release/scripts/release.sh`: it proposes the semver level, gates on a clean state + `npm test`, pushes the tag after approval, then monitors CI and verifies npm + the pi.dev catalog. The skill lives in `.agents/skills/` (not shipped `skills/`) because releasing *this* repo is project-specific; it is excluded from the npm tarball by the `files` allowlist. The machinery (`release.sh`, `test.yml`, `release.yml`) is intentionally kept near-identical to pi-cohort's; `release.sh` differs only in its CONFIG header (package name, repo slug, former name, test command).
+
+Mechanics:
 
 ```bash
-# 1. Bump version in package.json + add a CHANGELOG.md entry.
+# 1. Bump version in package.json + add the matching `## vX.Y.Z` CHANGELOG.md heading.
+#    package.json version == tag == CHANGELOG top heading (scripts/ci.mjs asserts this).
 git commit -m "Release vX.Y.Z"
-git tag vX.Y.Z
-# 2. Publish to npm (public). Requires npm auth with publish rights.
-npm publish --access public
-# 3. Push the tag.
-git push origin main --tags
+# 2. release.sh current runs npm test (the CI gate), tags, pushes, then verifies.
+bash .agents/skills/release/scripts/release.sh propose   # advisory level from git log
+bash .agents/skills/release/scripts/release.sh current   # test + tag + push + verify
 ```
+
+A pushed `v[0-9]+.[0-9]+.[0-9]+` tag fires `.github/workflows/release.yml`, which verifies the tag matches `package.json`, runs `npm test` (`scripts/ci.mjs`, which asserts version == CHANGELOG top), then runs `npm publish --provenance --access public` via **OIDC trusted publishing** (no `NPM_TOKEN` secret). `.github/workflows/test.yml` runs `npm test` on every push + PR. The pi.dev catalog at `https://pi.dev/packages/pi-gauntlet` crawls npm for the `pi-package` keyword on its own cadence - it is a downstream effect of publish, not a target.
+
+**One-time npm setup:** `pi-gauntlet` must be registered as a **trusted publisher** on npmjs.com (repo `jjuraszek/pi-gauntlet`, workflow `release.yml`) or the publish step fails with 403. This mirrors pi-cohort's tokenless setup under the same account.
 
 Consumers install explicitly:
 

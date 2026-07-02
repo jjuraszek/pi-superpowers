@@ -76,8 +76,19 @@ pi install npm:pi-gauntlet
 
 Pin an exact release with `npm:pi-gauntlet@X.Y.Z`. Pi clones the package, runs `npm install --omit=dev`, which triggers the `postinstall` script. Where personas land depends on the install location:
 
-- **User install** (package under `<home>/.pi/<profile>/...`): symlinks the seven agent files into `getAgentDir()/agents` — i.e. `$PI_CODING_AGENT_DIR/agents`, defaulting to `~/.pi/agent/agents`. This is pi-cohort's profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, …) gets its own personas instead of sharing the machine-global `~/.agents/`. Older versions installed into `~/.agents/`; on upgrade the postinstall removes stale `~/.agents/<name>.md` symlinks that point into a pi-gauntlet package (which would otherwise shadow the profile-scoped copy) and leaves your own files there alone.
+- **User install** (package under `<home>/.pi/<profile>/...`): symlinks the seven agent files into `getAgentDir()/agents` — i.e. `$PI_CODING_AGENT_DIR/agents`, defaulting to `~/.pi/agent/agents`. This is pi-cohort's profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, …) gets its own personas instead of sharing the machine-global `~/.agents/`. Earlier releases installed into the machine-global `~/.agents/`; on upgrade the postinstall removes stale `~/.agents/<name>.md` symlinks that point into a pi-gauntlet package (which would otherwise shadow the profile-scoped copy) and leaves your own files there alone.
 - **Project install** (package under `<repo>/.pi/...`): copies the seven agent files into `<repo>/.pi/agents/` (the project-scope discovery path). Copy, not symlink, so the files stay valid if you commit them; gitignore `.pi/agents/` if you'd rather keep them install-managed. Project scope wins over user scope on name collisions, so each repo's personas are independent of the user dir and of other repos.
+
+## Upgrading from v3.x
+
+v4.0.0 is the first public release and is a **breaking rename** (no behavior change). If you ran the package under its old identity:
+
+- Reinstall under the new name: `pi install -l npm:pi-gauntlet` (was `@jjuraszek/pi-superpowers`).
+- Rename settings namespace `piSuperpowers.*` -> `piGauntlet.*` in every preset's `settings.json` (a preset still on the old key silently gets defaults).
+- Rename your override file `.pi/superpowers-overrides.md` -> `.pi/gauntlet-overrides.md`.
+- Rename the env override `PI_SUPERPOWERS_AGENT_DIR` -> `PI_GAUNTLET_AGENT_DIR` if you set it.
+
+See [CHANGELOG.md](CHANGELOG.md) for the full v4.0.0 entry.
 
 ## Install (local development)
 
