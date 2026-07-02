@@ -34,7 +34,7 @@ ancestor) and may be edited freely.
      **Delegated**, never run inline.
 
 2. **The critique is auto-dispatched (no offer), selected by config:**
-   - Spec council configured (`piSuperpowers.specCouncil.members` non-empty) → the council
+   - Spec council configured (`piGauntlet.specCouncil.members` non-empty) → the council
      **is** the critique pass; invoke `/skill:roasting-the-spec` automatically.
    - Otherwise → dispatch **one fresh `worker`** with a plain critique brief. No chair, no
      fan-out, no council machinery, no `spec-council-member`. The "poor man's council" is a
@@ -49,14 +49,14 @@ ancestor) and may be edited freely.
    permits writes to `doc/specs/`. The placeholder re-scan + user gate are the backstop.
 
 4. **The fallback worker's model is not the skill's concern — documentation only.** `worker`
-   is a pi-subagents agent; its model resolves from `subagents.agentOverrides.worker.model`
+   is a pi-cohort agent; its model resolves from `subagents.agentOverrides.worker.model`
    in `settings.json`. Unset → it inherits the main-loop model. The skill dispatches `worker`
    with **no `model:` param** and does not invent config; it only documents this resolution.
    Fresh context isolates the critique off the main-loop context window regardless of model;
    the *cost* offload depends on the consumer setting that override. Not the skill's job to
    enforce.
 
-5. **`brainstorming` owns the config gate.** It parses `piSuperpowers.specCouncil.members`,
+5. **`brainstorming` owns the config gate.** It parses `piGauntlet.specCouncil.members`,
    emits the malformed-config warning, and selects the path (council vs worker).
    `roasting-the-spec` is invoked **only after** brainstorming confirms `members` is
    non-empty — it no longer offers, gates, or warns on absent/empty config.
@@ -116,7 +116,7 @@ handing to the user.`) with a paragraph that:
 - states the worker auto-applies, and the placeholder scan re-runs after it returns.
 
 **Section "Spec Council"** — flip offer → auto, and make brainstorming the config owner:
-brainstorming parses `piSuperpowers.specCouncil.members`, emits the malformed-config warning,
+brainstorming parses `piGauntlet.specCouncil.members`, emits the malformed-config warning,
 and selects the path. When `members` is non-empty the council *is* the critique pass (invoke
 `roasting-the-spec` automatically, no prompt); otherwise the fresh-`worker` critique runs
 instead.

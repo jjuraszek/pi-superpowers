@@ -222,7 +222,7 @@ name="${WORKTREE_PATH##*-}"
 "$MAIN_ROOT/script/worktree" destroy "$name"
 ```
 
-**If worktree path is under `.worktrees/` or `~/.worktrees/<project>/`:** Superpowers created this worktree — we own cleanup.
+**If worktree path is under `.worktrees/` or `~/.worktrees/<project>/`:** Gauntlet created this worktree — we own cleanup.
 
 ```bash
 MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
@@ -308,4 +308,4 @@ phase_tracker({ action: "complete", phase: "ship" })
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

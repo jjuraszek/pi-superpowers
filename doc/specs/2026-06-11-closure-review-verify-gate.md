@@ -15,7 +15,7 @@ This change makes the skip impossible: `phase-tracker.ts` rejects `complete veri
 | Gate + dispatch tracking | `extensions/phase-tracker.ts` | edit |
 | Wire Step 5 to the phase tracker (`start verify` before the audit, `complete verify` after the conformance verdict, `skip` on user waiver) | `skills/executing-plans/SKILL.md` | edit |
 | Extension config table (phase-tracker becomes configurable) + `closureReview` config docs: `enforce` row added next to the existing `model` row | `README.md` | edit |
-| Extension table: phase-tracker row changes from `Configurable: No` to `Configurable: Yes`, settings key `piSuperpowers.closureReview` (key: `enforce`) | `AGENTS.md` | edit |
+| Extension table: phase-tracker row changes from `Configurable: No` to `Configurable: Yes`, settings key `piGauntlet.closureReview` (key: `enforce`) | `AGENTS.md` | edit |
 | Changelog | `CHANGELOG.md` | edit (minor bump) |
 
 ## Non-goals
@@ -30,7 +30,7 @@ This change makes the skip impossible: `phase-tracker.ts` rejects `complete veri
 
 On `phase_tracker({ action: "complete", phase: "verify" })`:
 
-1. Read `piSuperpowers.closureReview.enforce` from settings at gate-time. Absent/undefined → `true`. `false` → gate disabled, complete proceeds as today.
+1. Read `piGauntlet.closureReview.enforce` from settings at gate-time. Absent/undefined → `true`. `false` → gate disabled, complete proceeds as today.
 2. If enforcing and no qualifying dispatch observed since the last `reset`: return an error result (existing guard pattern — state unchanged):
 
 ```
@@ -38,7 +38,7 @@ Error: cannot complete 'verify': no conformance-reviewer dispatch observed.
 The closing loop is required before verify completes. Either:
 - dispatch subagent({ agent: "conformance-reviewer", ... }) with the spec, the
   user's verbatim request, and the full diff (model from
-  piSuperpowers.closureReview.model), then complete verify after its verdict, or
+  piGauntlet.closureReview.model), then complete verify after its verdict, or
 - if the user explicitly waived closure review, record it:
   phase_tracker({ action: "skip", phase: "verify", reason: "<user waiver>" })
 ```
@@ -51,7 +51,7 @@ The closing loop is required before verify completes. Either:
 
 A `subagent` tool call in **execution mode** (`input.action` absent) whose result shows a successful `conformance-reviewer` child run.
 
-- **Success signal is per-child, not top-level `isError`.** Per pi-subagents `src/shared/types.ts`, the tool result's `details` is `{ mode, results: SingleResult[], asyncId? }` with `SingleResult { agent, exitCode, ... }`. Qualifies iff `details.results[]` contains an entry with `agent === "conformance-reviewer"` and `exitCode === 0`. (A failed child can return `isError: false` at the top level with `exitCode: 1` in the child entry.)
+- **Success signal is per-child, not top-level `isError`.** Per pi-cohort `src/shared/types.ts`, the tool result's `details` is `{ mode, results: SingleResult[], asyncId? }` with `SingleResult { agent, exitCode, ... }`. Qualifies iff `details.results[]` contains an entry with `agent === "conformance-reviewer"` and `exitCode === 0`. (A failed child can return `isError: false` at the top level with `exitCode: 1` in the child entry.)
 - **Management mode never qualifies** — `action: "list"`/`"get"`/etc. return `mode: "management", results: []`; merely listing the agent catalog must not satisfy the gate (exactly the false signal present in the observed failed session).
 - **Async never qualifies** — a dispatch with `details.asyncId` present returns before the child runs (`results: []`); the closing loop requires a foreground dispatch whose verdict exists when the gate is checked.
 - **Exact match** — case-sensitive `===` on the `agent` field of `details.results[]` entries, no substring/regex. A task description merely mentioning "conformance-reviewer" does not qualify — qualification is decided solely on the result's `details.results[]`.
@@ -67,15 +67,15 @@ Two paths, mirroring patterns already in the extension:
 
 No new persistence — the session branch is the single source of truth, same as phase state today.
 
-Message shapes: tool result `details` per pi-subagents `Details`/`SingleResult` (`src/shared/types.ts`); session message shapes per the existing branch-replay code in `phase-tracker.ts`; event subscription per `verify-before-ship.ts`.
+Message shapes: tool result `details` per pi-cohort `Details`/`SingleResult` (`src/shared/types.ts`); session message shapes per the existing branch-replay code in `phase-tracker.ts`; event subscription per `verify-before-ship.ts`.
 
 ## Config
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `piSuperpowers.closureReview.enforce` | boolean | `true` | Gate `complete verify` on an observed conformance-reviewer dispatch |
+| `piGauntlet.closureReview.enforce` | boolean | `true` | Gate `complete verify` on an observed conformance-reviewer dispatch |
 
-Lives under the existing `closureReview` key (which already carries `model`, consumed by skills). Default-on is deliberate: pi-subagents is mandatory for consumers, and an opt-in default would let a preset silently re-inherit the observed failure.
+Lives under the existing `closureReview` key (which already carries `model`, consumed by skills). Default-on is deliberate: pi-cohort is mandatory for consumers, and an opt-in default would let a preset silently re-inherit the observed failure.
 
 ## Verification
 

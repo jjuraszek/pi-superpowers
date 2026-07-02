@@ -42,7 +42,7 @@ Report with branch state:
 
 ## Step 1 — Announce, Don't Ask (skill-driven work defaults to a worktree)
 
-For superpowers-driven work — brainstorming, plans, implementation — the worktree is the default, not a question. Announce and proceed:
+For gauntlet-driven work — brainstorming, plans, implementation — the worktree is the default, not a question. Announce and proceed:
 
 > "Setting up an isolated worktree at `<path>` on branch `<branch>` for this work."
 
@@ -76,7 +76,7 @@ Only when no native tool exists:
 
 The canonical home is `<repo>/.worktrees/<branch>`. Resolve in this order:
 
-1. **Project override** — a wrapper/script or a `.pi/superpowers-overrides.md` worktree path (`grep -i worktree README.md AGENTS.md .pi/settings.json .pi/superpowers-overrides.md`). Obey it.
+1. **Project override** — a wrapper/script or a `.pi/gauntlet-overrides.md` worktree path (`grep -i worktree README.md AGENTS.md .pi/settings.json .pi/gauntlet-overrides.md`). Obey it.
 2. **Default** — `<repo>/.worktrees/<branch>`. Create the directory if missing (Step 2b).
 3. **No enclosing repo** — only when there's no repo to anchor `.worktrees/`, fall back to `~/.worktrees/<project>/<branch>`.
 
@@ -190,4 +190,4 @@ Re-run tests after rebasing.
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

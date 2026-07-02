@@ -28,15 +28,15 @@ The only parallel skill, `dispatching-parallel-agents`, is framed exclusively fo
 
 ## Ground-Truth Constraints
 
-The `pi-subagents` skill (dispatch ground truth) is deliberately opinionated **against** parallel writes:
+The `pi-cohort` skill (dispatch ground truth) is deliberately opinionated **against** parallel writes:
 
-- "Parallelize reading, review, validation, and synthesis support, **not normal writes**, unless you deliberately isolate writers with worktrees." (`skills/pi-subagents/SKILL.md:629`)
+- "Parallelize reading, review, validation, and synthesis support, **not normal writes**, unless you deliberately isolate writers with worktrees." (`skills/pi-cohort/SKILL.md:629`)
 - "For very large work, split into serial milestones instead of launching a swarm of writers." (`:703`)
 - `worktree: true` is the one sanctioned concurrent-write mechanism: "gives each parallel task its own git worktree branched from HEAD." (`:415-431`)
 
 This design lives **entirely inside the worktree-isolation carve-out.** The skill changes must invoke that exception explicitly; parallel-wave mode is the deliberate, isolated-writer case, not a relaxation of the single-writer default.
 
-### Verified dispatch mechanics (`pi-subagents` source)
+### Verified dispatch mechanics (`pi-cohort` source)
 
 | Fact | Source | Design consequence |
 |---|---|---|
@@ -155,7 +155,7 @@ Add a "Parallel-Wave Mode" section. Default flow ("The Process") stays as the se
 
 **Red-flag reconciliation.** The current red flag "Dispatching multiple implementer subagents in parallel on overlapping files" stays — it is exactly what the independence check + worktree isolation prevent. Reword to: "Dispatching parallel implementers on overlapping files, or without `worktree: true` / outside wave mode." Wave mode is the sanctioned exception (disjoint files + worktree isolation + serial integration).
 
-**Caveat (generic).** Parallel-wave mode requires each task to be independently runnable and verifiable in a fresh worktree — no reliance on uncommitted local state. `pi-subagents` symlinks `node_modules`; repos needing other per-worktree setup must account for it.
+**Caveat (generic).** Parallel-wave mode requires each task to be independently runnable and verifiable in a fresh worktree — no reliance on uncommitted local state. `pi-cohort` symlinks `node_modules`; repos needing other per-worktree setup must account for it.
 
 ### 4. `dispatching-parallel-agents` — generalize beyond debugging
 
@@ -201,7 +201,7 @@ Two failure classes, detected at different stages:
 
 - **Single-task wave.** Runs as today's sequential per-task flow (worktree fan-out is pointless for N=1).
 - **`BLOCKED`/`NEEDS_CONTEXT` mid-wave.** Integrate and commit the `DONE` tasks first; then resolve the blocked task per existing rules (diagnose / re-dispatch with answers / escalate) before advancing. A blocked task never strands a wave's completed work, but the wave is not "complete" until the blocked task resolves or the user accepts dropping it.
-- **Dirty tree before a wave.** Forbidden — `pi-subagents` worktree mode requires clean state. The commit-per-wave rule guarantees it; if the tree is dirty, stop and surface it.
+- **Dirty tree before a wave.** Forbidden — `pi-cohort` worktree mode requires clean state. The commit-per-wave rule guarantees it; if the tree is dirty, stop and surface it.
 - **Whole wave fails / repeated conflicts.** After the existing two-attempt fix budget, stop and report; the wave was mis-grouped or the plan is wrong.
 - **Empty wave.** Plan error; reject at the independence check.
 
@@ -209,10 +209,10 @@ Two failure classes, detected at different stages:
 
 | Alternative | Why not |
 |---|---|
-| Staged-planning + single writer (pi-subagents milestone/`/orchestrate` model) | Parallelizes *judgment*, not *writes*. Doesn't deliver wall-clock wins for independent, write-heavy tasks — the user's actual goal. |
-| Shared-worktree parallel writers | Collisions; violates `pi-subagents` single-writer guidance and the existing red flag. |
+| Staged-planning + single writer (pi-cohort milestone/`/orchestrate` model) | Parallelizes *judgment*, not *writes*. Doesn't deliver wall-clock wins for independent, write-heavy tasks — the user's actual goal. |
+| Shared-worktree parallel writers | Collisions; violates `pi-cohort` single-writer guidance and the existing red flag. |
 | Implicit auto-parallelization (any independent wave) | Contradicts single-writer default; fires worktree overhead on tiny tasks. Hybrid (explicit choice once at handoff) preferred. |
-| Branch-merge integration | Not available — `pi-subagents` removes worktrees/branches and returns patches. Patch-apply is the actual contract. |
+| Branch-merge integration | Not available — `pi-cohort` removes worktrees/branches and returns patches. Patch-apply is the actual contract. |
 | New dedicated parallel-execution skill | Duplicates `subagent-driven-development`. Parallel is a mode + reuse of `dispatching-parallel-agents`. |
 
 ## Verification Approach

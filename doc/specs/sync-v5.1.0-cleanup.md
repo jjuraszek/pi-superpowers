@@ -2,7 +2,7 @@
 
 ## Context
 
-Audit comparing pi-superpowers HEAD against `obra/superpowers@f2cbfbefebbf` (v5.1.0, May 4 2026) and `coctostan/pi-superpowers-plus` found:
+Audit comparing pi-gauntlet HEAD against `obra/superpowers@f2cbfbefebbf` (v5.1.0, May 4 2026) and `coctostan/pi-superpowers-plus` found:
 
 | # | Class | Issue |
 |---|---|---|
@@ -30,7 +30,7 @@ Three phases, each landing as one or more commits, each verified by `code-review
 - Porting `coctostan/pi-superpowers-plus` runtime workflow-monitor extension (separate decision, larger scope).
 - Touching `agents/*.md` — frontmatter and personas are aligned.
 - Refactoring split SKILL.md → reference/ structure for any other skill — current split is fine.
-- Bumping pi-coding-agent or pi-subagents version pins.
+- Bumping pi-coding-agent or pi-cohort version pins.
 
 ---
 
@@ -238,7 +238,7 @@ Update the Extensions table to add `phase-tracker.ts`:
 |---|---|---|
 | `plan-tracker.ts` | No | — |
 | `phase-tracker.ts` | No | — |
-| `verify-before-ship.ts` | Yes | `settings.json#piSuperpowers.verifyBeforeShip` |
+| `verify-before-ship.ts` | Yes | `settings.json#piGauntlet.verifyBeforeShip` |
 
 Update the "Modifying an extension" section if it references the count.
 

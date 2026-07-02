@@ -37,7 +37,7 @@ code-quality system prompt and compresses the conformance result to an
 afterthought. Code quality is one dispatch; conformance is another.
 
 The persona ships model-free. Read the active preset's settings at
-`$PI_CODING_AGENT_DIR/settings.json` for `piSuperpowers.closureReview.model` and
+`$PI_CODING_AGENT_DIR/settings.json` for `piGauntlet.closureReview.model` and
 inject it **call-site** on the dispatch (`model:` if set, else omit to inherit the
 parent's model) — the same mechanism the spec-council chair uses. If the configured
 model is unreachable, retry once with the inherited model. Point it at the strongest
@@ -55,7 +55,7 @@ Self-checking in the main session is the fallback when delegation isn't possible
 | 2 | Original prompt | Catches inline requirements never folded into the spec. |
 | 3 | Re-fetch the ticket | **Fallback only**, when no spec exists. Skip when a spec exists — the live ticket may have drifted. |
 
-Project's issue-tracker skill (for the fallback) is named in `.pi/superpowers-overrides.md`.
+Project's issue-tracker skill (for the fallback) is named in `.pi/gauntlet-overrides.md`.
 
 ## Drift = red flag
 
@@ -120,7 +120,7 @@ Dated-decision template (append to the spec's decisions/deviations section):
 - YYYY-MM-DD accept|rescope Gn: <requirement/behavior> — <one-line rationale> (conformance gate)
 ```
 
-**Commit accept/rescope spec edits BEFORE any fix wave dispatches:** pi-subagents
+**Commit accept/rescope spec edits BEFORE any fix wave dispatches:** pi-cohort
 rejects a dirty tree on a `worktree: true` dispatch, and the re-audit must read the
 amended spec. If a round has only accept/rescope and no `fix`, the edits land, the
 verdict is recorded, and no re-audit runs.
@@ -196,10 +196,10 @@ the gaps marked `fix` this round **plus** any previously-DELIVERED requirement w
 still-open with its prior verdict, or introducing `Gn+1`.
 
 - The re-audit dispatch carries the **same call-site `model:` injection** as the initial
-  audit (when `piSuperpowers.closureReview.model` is set, the phase-tracker closure guard
+  audit (when `piGauntlet.closureReview.model` is set, the phase-tracker closure guard
   requires every `conformance-reviewer` dispatch to specify `model:`).
 - New or still-open gaps within the cap re-enter the menu above.
-- **Cap: read `piSuperpowers.closureReview.maxFixRounds`** (default `2`; missing/non-integer
+- **Cap: read `piGauntlet.closureReview.maxFixRounds`** (default `2`; missing/non-integer
   → `2`; `< 0` → `0`). `0` = audit-only: `GAPS` renders an accept/rescope-only menu and any
   unresolved gap escalates instead of dispatching a fix.
 - **On non-convergence** (cap reached with open gaps): **escalate to human** with the

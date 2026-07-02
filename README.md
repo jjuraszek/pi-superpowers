@@ -1,12 +1,12 @@
-# pi-superpowers
+# pi-gauntlet
 
 A workflow library for the [pi coding agent](https://github.com/badlogic/pi-mono): opinionated skills, ready-to-use subagent personas, and three runtime extensions.
 
-Inspired by [obra/superpowers](https://github.com/obra/superpowers) (Claude Code) and [coctostan/pi-superpowers-plus](https://github.com/coctostan/pi-superpowers-plus). Ported to pi and trimmed to the pieces that survive across projects.
+A diverged reinterpretation of [obra/superpowers](https://github.com/obra/superpowers) (Claude Code), by way of [coctostan/pi-superpowers-plus](https://github.com/coctostan/pi-superpowers-plus), rebuilt for pi with enforced gates, a spec council, conformance review, and parallel execution waves. See [Lineage](#lineage) for what changed.
 
 ## The workflow
 
-pi-superpowers is **opinionated**: every non-trivial change rides one pipeline, idea to merge. There is no separate "just edit a file and commit" path — the skills gate each other, so the next phase can't open until the current one closes.
+pi-gauntlet is **opinionated**: every non-trivial change rides one pipeline, idea to merge. There is no separate "just edit a file and commit" path — the skills gate each other, so the next phase can't open until the current one closes.
 
 ```
 brainstorm → plan → implement → verify → ship
@@ -35,7 +35,7 @@ Spec, plan, and implementation all live in the **same worktree** and ship as **o
 - **Worktree lifecycle** — `using-git-worktrees`, `finishing-a-development-branch`
 - **Meta** — `writing-skills`
 
-**7 subagent personas** dispatchable via [pi-subagents](https://github.com/jjuraszek/pi-subagents):
+**7 subagent personas** dispatchable via [pi-cohort](https://github.com/jjuraszek/pi-cohort):
 
 - `implementer` — strict RED→GREEN→REFACTOR TDD, completion-guarded.
 - `code-reviewer` — read-only review, Critical/Moderate/Minor severity.
@@ -54,54 +54,54 @@ Spec, plan, and implementation all live in the **same worktree** and ship as **o
 ## Requirements
 
 - [pi-coding-agent](https://github.com/badlogic/pi-mono) ≥ 0.1.0
-- [pi-subagents](https://github.com/jjuraszek/pi-subagents) — required peer package. Skills that dispatch agents (`requesting-code-review`, `subagent-driven-development`, `dispatching-parallel-agents`, `writing-plans`, `writing-skills`) call `subagent({})`, which is provided by pi-subagents.
+- [pi-cohort](https://github.com/jjuraszek/pi-cohort) ≥ 1.4.5 — required peer package. Skills that dispatch agents (`requesting-code-review`, `subagent-driven-development`, `dispatching-parallel-agents`, `writing-plans`, `writing-skills`) call `subagent({})`, which is provided by pi-cohort. pi-gauntlet does not vendor the dispatch tool; without pi-cohort those skills have nothing to call.
 
-Both packages must be listed in your `.pi/settings.json#packages` array (pi adds them automatically when you `pi install`).
+Both packages must be listed in your `.pi/settings.json#packages` array (pi adds them automatically when you `pi install`). pi-gauntlet and pi-cohort are versioned independently but release together whenever dispatch semantics change — pin compatible versions of both.
 
 ## Install
 
-**Project scope** (recommended — committable via the repo's `.pi/settings.json`):
+**Project scope** (recommended — committable via the repo's `.pi/settings.json`; `-l` writes to project settings):
 
 ```bash
-pi install -l git:github.com/jjuraszek/pi-subagents@<sha-or-tag>
-pi install -l git:github.com/jjuraszek/pi-superpowers@v1.2.1
+pi install -l npm:pi-cohort
+pi install -l npm:pi-gauntlet
 ```
 
-**User scope** (all repos under your pi profile):
+**User scope** (all repos under your pi profile; the default target is user settings):
 
 ```bash
-pi install git:github.com/jjuraszek/pi-subagents@<sha-or-tag>
-pi install git:github.com/jjuraszek/pi-superpowers@v1.2.1
+pi install npm:pi-cohort
+pi install npm:pi-gauntlet
 ```
 
-Pi clones the package, runs `npm install --omit=dev`, which triggers the `postinstall` script. Where personas land depends on the install location:
+Pin an exact release with `npm:pi-gauntlet@X.Y.Z`. Pi clones the package, runs `npm install --omit=dev`, which triggers the `postinstall` script. Where personas land depends on the install location:
 
-- **User install** (package under `<home>/.pi/<profile>/...`): symlinks the seven agent files into `getAgentDir()/agents` — i.e. `$PI_CODING_AGENT_DIR/agents`, defaulting to `~/.pi/agent/agents`. This is pi-subagents' profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, …) gets its own personas instead of sharing the machine-global `~/.agents/`. Older versions installed into `~/.agents/`; on upgrade the postinstall removes stale `~/.agents/<name>.md` symlinks that point into a pi-superpowers package (which would otherwise shadow the profile-scoped copy) and leaves your own files there alone.
+- **User install** (package under `<home>/.pi/<profile>/...`): symlinks the seven agent files into `getAgentDir()/agents` — i.e. `$PI_CODING_AGENT_DIR/agents`, defaulting to `~/.pi/agent/agents`. This is pi-cohort's profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, …) gets its own personas instead of sharing the machine-global `~/.agents/`. Older versions installed into `~/.agents/`; on upgrade the postinstall removes stale `~/.agents/<name>.md` symlinks that point into a pi-gauntlet package (which would otherwise shadow the profile-scoped copy) and leaves your own files there alone.
 - **Project install** (package under `<repo>/.pi/...`): copies the seven agent files into `<repo>/.pi/agents/` (the project-scope discovery path). Copy, not symlink, so the files stay valid if you commit them; gitignore `.pi/agents/` if you'd rather keep them install-managed. Project scope wins over user scope on name collisions, so each repo's personas are independent of the user dir and of other repos.
 
 ## Install (local development)
 
 ```bash
-git clone git@github.com:jjuraszek/pi-superpowers.git ~/repos/pi-superpowers
+git clone git@github.com:jjuraszek/pi-gauntlet.git ~/repos/pi-gauntlet
 cd ~/path/to/your/repo
-pi install -l ~/repos/pi-superpowers
+pi install -l ~/repos/pi-gauntlet
 # Local-path installs skip `npm install`; run the symlink step manually:
-cd ~/repos/pi-superpowers && npm run link-agents
+cd ~/repos/pi-gauntlet && npm run link-agents
 ```
 
-After that, edits in `~/repos/pi-superpowers/` are picked up on next pi launch.
+After that, edits in `~/repos/pi-gauntlet/` are picked up on next pi launch.
 
 ## Project-specific overrides
 
 The skills shipped here are generic on purpose — they describe *how* to TDD, brainstorm, debug, request review, etc., without naming your services, your CI command, or your worktree wrapper. When you need that level of detail, drop a file at:
 
 ```
-.pi/superpowers-overrides.md
+.pi/gauntlet-overrides.md
 ```
 
 …in your repo. The skills read it at runtime and merge sections that match the skill's name or topic.
 
-### Example `.pi/superpowers-overrides.md`
+### Example `.pi/gauntlet-overrides.md`
 
 ```markdown
 ## verification-before-completion
@@ -129,11 +129,11 @@ Two notes:
 
 On a user install the seven personas in `agents/` are symlinked into `getAgentDir()/agents` (profile-scoped user dir — `$PI_CODING_AGENT_DIR/agents`, default `~/.pi/agent/agents`). On a project install they are copied into `<repo>/.pi/agents/` (project scope, isolated per repo). Override precedence is `project > user > builtin`, so a project install always shadows the user personas for that repo, and you can hand-edit or drop your own `.pi/agents/<name>.md` to shadow them further.
 
-Target dir override: set `PI_SUPERPOWERS_AGENT_DIR` to force symlinking into a specific dir (leading `~` expanded; always symlink mode).
+Target dir override: set `PI_GAUNTLET_AGENT_DIR` to force symlinking into a specific dir (leading `~` expanded; always symlink mode).
 
 ### Thinking budgets
 
-`implementer`, `code-reviewer`, and `spec-reviewer` ship without `thinking:` in their frontmatter — pi-subagents `agentOverrides` only fill frontmatter-unset fields, so leaving it unset makes the budget a per-preset config knob. Set it in each preset's `settings.json` (use `false` on non-thinking models → provider default):
+`implementer`, `code-reviewer`, and `spec-reviewer` ship without `thinking:` in their frontmatter — pi-cohort `agentOverrides` only fill frontmatter-unset fields, so leaving it unset makes the budget a per-preset config knob. Set it in each preset's `settings.json` (use `false` on non-thinking models → provider default):
 
 ```json
 {
@@ -151,11 +151,11 @@ Unset → provider default thinking for that model. `conformance-reviewer` and t
 
 ### Conformance gate model
 
-`conformance-reviewer` ships without a `model:` in its frontmatter — like the spec-council personas, its model is supplied per preset so each profile points the last correctness gate at the strongest reasoning model its providers can reach. The verify-step skills read it from `piSuperpowers.closureReview.model` and inject it **call-site** on the conformance dispatch (the same mechanism the spec-council chair uses). Add it to each preset's `settings.json`:
+`conformance-reviewer` ships without a `model:` in its frontmatter — like the spec-council personas, its model is supplied per preset so each profile points the last correctness gate at the strongest reasoning model its providers can reach. The verify-step skills read it from `piGauntlet.closureReview.model` and inject it **call-site** on the conformance dispatch (the same mechanism the spec-council chair uses). Add it to each preset's `settings.json`:
 
 ```json
 {
-  "piSuperpowers": {
+  "piGauntlet": {
     "closureReview": { "model": "<provider/model>", "enforce": true, "maxFixRounds": 2 }
   }
 }
@@ -179,7 +179,7 @@ If you want to know what's in each persona before using it, see [`agents/`](./ag
 
 ```json
 {
-  "piSuperpowers": {
+  "piGauntlet": {
     "specCouncil": {
       "members": ["<provider/model>", "<provider/model>", "<provider/model>"],
       "chair": "<provider/model>"
@@ -201,7 +201,7 @@ A tool, not a hook. Skills call `plan_tracker({ action: "init" | "update" | "sta
 
 ### `phase-tracker`
 
-A tool, not a hook. Skills call `phase_tracker({ action: "start" | "complete" | "skip" | "status" | "reset", phase?, reason? })` to track workflow phase progress. A TUI widget shows the five-phase pipeline: `○ brainstorm → ○ plan → ○ implement → ○ verify → ○ ship`. State branches with the session, no config needed. Phases are entered **explicitly** by the phase-owning skills, so outside a superpowers flow the widget stays dormant. The `brainstorming` skill resets both trackers on entry (new flow, clean slate); `implement` auto-completes from `plan-tracker` once a skill has started it.
+A tool, not a hook. Skills call `phase_tracker({ action: "start" | "complete" | "skip" | "status" | "reset", phase?, reason? })` to track workflow phase progress. A TUI widget shows the five-phase pipeline: `○ brainstorm → ○ plan → ○ implement → ○ verify → ○ ship`. State branches with the session, no config needed. Phases are entered **explicitly** by the phase-owning skills, so outside a gauntlet flow the widget stays dormant. The `brainstorming` skill resets both trackers on entry (new flow, clean slate); `implement` auto-completes from `plan-tracker` once a skill has started it.
 
 Distinct from `plan-tracker`: `phase-tracker` answers "what stage of the workflow am I in?"; `plan-tracker` answers "which task within the current stage am I on?"
 
@@ -211,16 +211,16 @@ Distinct from `plan-tracker`: `phase-tracker` answers "what stage of the workflo
 last `reset`. Management calls (`action: "list"` etc.) and async dispatches never
 qualify. A user waiver is recorded via `skip` with a reason — there is no `force`
 bypass on `complete`. Disable per preset with
-`settings.json#piSuperpowers.closureReview.enforce: false` (default: enforced).
+`settings.json#piGauntlet.closureReview.enforce: false` (default: enforced).
 
 **Flow guards.** Two guards, on by default, disabled per
-preset with `settings.json#piSuperpowers.flowGuards.enforce: false`:
+preset with `settings.json#piGauntlet.flowGuards.enforce: false`:
 
 - **Worktree discipline (blocks).** During `brainstorm`/`plan`/`implement`, an in-place
   `git switch` / `git checkout -b`/`-B` is blocked — the bash call does not run.
   Active **only when pi was launched in the primary checkout** (not a linked
   worktree); `git worktree ...` and plain `git checkout <file>` never trip it.
-  Override via `piSuperpowers.flowGuards.enforce: false`.
+  Override via `piGauntlet.flowGuards.enforce: false`.
 - **Spec-phase confinement (advisory).** During `brainstorm`, a `write`/`edit` (or a bash
   mutation: `>`/`>>`/`tee`/`sed -i`/`git apply`) outside the spec dir warns that
   brainstorming may only touch the spec. Spec dirs come from
@@ -237,7 +237,7 @@ Override in `.pi/settings.json`:
 
 ```json
 {
-  "piSuperpowers": {
+  "piGauntlet": {
     "verifyBeforeShip": {
       "testCommands": ["make ci", "bundle exec rspec"],
       "warningReference": "doc/testing.md"
@@ -253,11 +253,15 @@ Override in `.pi/settings.json`:
 Bump explicitly:
 
 ```bash
-pi install -l git:github.com/jjuraszek/pi-superpowers@vX.Y.Z
+pi install -l npm:pi-gauntlet@X.Y.Z
 ```
 
-See [`CHANGELOG.md`](./CHANGELOG.md) for what changed in each release. Semver: minor for new skill/agent/extension, major for renames or breaking config changes.
+See [`CHANGELOG.md`](./CHANGELOG.md) for what changed in each release. Semver: minor for new skill/agent/extension, major for renames or breaking config changes. pi-gauntlet and its dispatch peer [pi-cohort](https://github.com/jjuraszek/pi-cohort) version independently but ship together whenever dispatch semantics change; pin compatible versions of both.
+
+## Lineage
+
+pi-gauntlet began as a port of [obra/superpowers](https://github.com/obra/superpowers) (MIT, Copyright (c) 2025 Jesse Vincent), by way of [coctostan/pi-superpowers-plus](https://github.com/coctostan/pi-superpowers-plus), and has since diverged into its own thing. It drops upstream's memory/journal system and its sequential-only execution model, and adds a multi-model spec council, a closing-loop conformance-review gate, file- and resource-disjoint parallel execution waves, and enforced phase gates (brainstorm, verify, and ship are guarded at runtime, not merely suggested). The skill methodology still owes its shape to obra's work; the runtime, the gates, and the agent roster are pi-gauntlet's own.
 
 ## License
 
-MIT (declared in `package.json`).
+MIT. See [`LICENSE`](./LICENSE). Portions derive from obra/superpowers (MIT) and coctostan/pi-superpowers-plus; their copyright notice is preserved in `LICENSE`.

@@ -152,9 +152,9 @@ From recurring failure modes:
 
 ## Enforcement
 
-The `verify-before-ship` extension shipped by pi-superpowers watches `git commit`, `git push`, and `gh pr create`. If you have not run a passing recognised verification command since your last source-file edit in this session, an advisory warning is injected into the tool result. The warning clears automatically after a fresh passing run.
+The `verify-before-ship` extension shipped by pi-gauntlet watches `git commit`, `git push`, and `gh pr create`. If you have not run a passing recognised verification command since your last source-file edit in this session, an advisory warning is injected into the tool result. The warning clears automatically after a fresh passing run.
 
-Defaults recognise `make ci`, `make test`, `npm test`, `pnpm test`, `yarn test`, `pytest`, `rspec`, `cargo test`, `go test`. Projects can override (or narrow) the list via `settings.json#piSuperpowers.verifyBeforeShip.testCommands`.
+Defaults recognise `make ci`, `make test`, `npm test`, `pnpm test`, `yarn test`, `pytest`, `rspec`, `cargo test`, `go test`. Projects can override (or narrow) the list via `settings.json#piGauntlet.verifyBeforeShip.testCommands`.
 
 Before running the verification gate, call `phase_tracker({ action: "start", phase: "verify" })`.
 
@@ -166,4 +166,4 @@ phase_tracker({ action: "complete", phase: "verify" })
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

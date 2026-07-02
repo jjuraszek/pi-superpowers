@@ -11,7 +11,7 @@
  * Configurable via settings.json:
  *
  *   {
- *     "piSuperpowers": {
+ *     "piGauntlet": {
  *       "verifyBeforeShip": {
  *         "testCommands": ["make ci", "make test", "pytest", "rspec"],
  *         "warningReference": "doc/testing.md"
@@ -42,7 +42,7 @@ const SOURCE_EXT = /\.(ts|tsx|js|jsx|py|rb|go|rs|java|swift|kt)$/;
 const TEST_PATH = /(^|\/)(tests?|__tests__)\/|\.(test|spec)\.|_test\.(py|go|rb)$/;
 
 type Settings = {
-  piSuperpowers?: {
+  piGauntlet?: {
     verifyBeforeShip?: {
       testCommands?: string[];
       warningReference?: string;
@@ -73,7 +73,7 @@ const formatWarning = (command: string, testCommands: string[], reference: strin
 
 export default function (pi: ExtensionAPI) {
   const settings = (pi.settings ?? {}) as Settings;
-  const cfg = settings.piSuperpowers?.verifyBeforeShip ?? {};
+  const cfg = settings.piGauntlet?.verifyBeforeShip ?? {};
   const testCommands = cfg.testCommands ?? DEFAULT_TEST_COMMANDS;
   const testRegex = buildTestCmdRegex(testCommands);
   const reference = cfg.warningReference;

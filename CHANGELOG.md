@@ -1,24 +1,36 @@
 # Changelog
 
+## v4.0.0 - 2026-07-02
+
+**Breaking: public identity.** First public npm release. The package is renamed and re-homed for its own identity as a diverged reinterpretation of obra/superpowers (via coctostan/pi-superpowers-plus); see the README `Lineage` section. No skill, agent, or extension *behavior* changes in this release - it is a rename + credits + publish-readiness pass. Consumers must update their `.pi/settings.json` and any override file.
+
+- **Package renamed `@jjuraszek/pi-superpowers` -> `pi-gauntlet`** (unscoped, published to npm as public). Install becomes `pi install npm:pi-gauntlet` (`-l` for project scope). `repository`/`homepage`/`bugs` now point at `jjuraszek/pi-gauntlet`; `keywords` gain `pi-package` and drop `superpowers`.
+- **Settings namespace renamed `piSuperpowers.*` -> `piGauntlet.*`** across all extensions and skills. Every configured key moves: `piGauntlet.closureReview` (`enforce`, `model`, `maxFixRounds`), `piGauntlet.flowGuards` (`enforce`, `specDirs`), `piGauntlet.verifyBeforeShip` (`testCommands`, `warningReference`). A preset still using `piSuperpowers.*` gets defaults silently - update every preset's `settings.json`.
+- **Override filename renamed `.pi/superpowers-overrides.md` -> `.pi/gauntlet-overrides.md`.** Every skill's "Project overrides" block reads the new path; consumers must rename their override file.
+- **Env override renamed `PI_SUPERPOWERS_AGENT_DIR` -> `PI_GAUNTLET_AGENT_DIR`** in `bin/install-agents.mjs`.
+- **Dispatch peer is now `pi-cohort`** (the package providing the `subagent()` tool) in all references - README peer-dependency, AGENTS.md ground-truth, skill bodies. pi-gauntlet requires `pi-cohort >= 1.4.5`; the two packages release together whenever dispatch semantics change.
+- **Added `LICENSE`** (MIT) with obra/superpowers copyright preserved; README gains a `Lineage` section; AGENTS.md `Upstream inspiration` is reframed from an active re-sync workflow into a historical lineage/credits record (SHA table kept).
+- **Docs scrub.** Internal consumer-project identifiers removed from `doc/specs/`; the flow-guards spec file is renamed `2026-06-17-superpowers-flow-guards.md` -> `2026-06-17-gauntlet-flow-guards.md`.
+
 ## v3.5.0 - 2026-07-02
 
 Turn the conformance gate from a detector into a closer. It found gaps well (50% of measured full-flow sessions got `GAPS`) but closed them badly - no enumerated issue list, no disposition menu, and only 3/29 gapped sessions ever re-audited after a fix. Post-gap handling was ad hoc and one session looped 7 rounds unbounded.
 
 - **Machine-addressable reviewer output** (`agents/conformance-reviewer.md`). Each non-DELIVERED row now emits a structured gap block (`id`/`verdict`/`origin`/`evidence`/`remediation`/`touched-files`/`touched-resources`/`recommended`) plus a `Parallel-safe:` disjointness certification line, so the orchestrator can drive disposition and fix concurrency mechanically. Frontmatter unchanged.
 - **Remediation-loop protocol** (`verification-before-completion/reference/conformance-check.md`). The "When the check finds gaps" section now specifies a numbered disposition menu (apply-all-recommended, with accept/rescope confirmation), isolated fix-wave dispatch reusing `dispatching-parallel-agents` mechanics (fresh context + `worktree: true` + serial integrate + one `code-reviewer` pass + test gate), and a bounded delta re-audit with a regression guard. `subagent-driven-development` Parallel-Wave Mode is deliberately **not** reused - its `phase_tracker({ phase: "implement" })` open errors during the verify phase - so the loop targets the lower-level fan-out primitive and leaves execution machinery untouched.
-- **New `piSuperpowers.closureReview.maxFixRounds`** (default `2`). Caps the fix/re-audit loop; `0` = audit-only. Enforced by protocol prose, not the phase-tracker extension.
+- **New `piGauntlet.closureReview.maxFixRounds`** (default `2`). Caps the fix/re-audit loop; `0` = audit-only. Enforced by protocol prose, not the phase-tracker extension.
 - **Call-site pointers** in `subagent-driven-development` and `finishing-a-development-branch` replace their inline disposition prose; the finishing skill notes fix dispatch is unavailable on non-worktree / detached-HEAD finishes.
 
 ## v3.4.3 - 2026-07-01
 
-Enforce the conformance gate's configured model at dispatch time. `conformance-reviewer` ships model-free and the verify-step skills are instructed to inject `piSuperpowers.closureReview.model` call-site - but nothing checked it. An orchestrator that read the reminder yet omitted `model:` had its closing gate silently inherit the parent session's builder model (e.g. Opus) instead of the pinned independent model, defeating the point of a cold cross-model gate. The failure was invisible: the run succeeded and satisfied the existing "a conformance-reviewer ran" completion guard.
+Enforce the conformance gate's configured model at dispatch time. `conformance-reviewer` ships model-free and the verify-step skills are instructed to inject `piGauntlet.closureReview.model` call-site - but nothing checked it. An orchestrator that read the reminder yet omitted `model:` had its closing gate silently inherit the parent session's builder model (e.g. Opus) instead of the pinned independent model, defeating the point of a cold cross-model gate. The failure was invisible: the run succeeded and satisfied the existing "a conformance-reviewer ran" completion guard.
 
 - **New `tool_call` guard in `phase-tracker.ts`.** When `closureReview.model` is set, a `subagent` dispatch of `conformance-reviewer` that omits `model:` is blocked before it runs, with a corrective reason naming the configured model. Walks the single / `tasks` / `chain` / `parallel` dispatch shapes. The documented "retry once inherited" fallback is preserved - an *explicit* model (even the inherited one) passes; only a bare omission is blocked. Gated by the same `closureReview.enforce` toggle (default `true`). Management/control dispatches (`action:` list/get/create/update/delete/status/...) execute nothing and are exempt, so they are never blocked.
 - **Docs synced** (`README.md` conformance-gate section, `AGENTS.md` settings-key table).
 
 ## v3.4.2 - 2026-06-29
 
-Sharpen the `code-reviewer` Simplicity dimension with an over-engineering tag taxonomy borrowed from the ponytail-review skill. Priority #6 was a single vague bullet ("Can the same outcome be reached with less code?") that produced soft, unactionable findings.
+Sharpen the `code-reviewer` Simplicity dimension with an over-engineering tag taxonomy borrowed from the ponytail-review skill (a project-specific, aggressively-themed code-review skill in a consumer repo - not shipped here). Priority #6 was a single vague bullet ("Can the same outcome be reached with less code?") that produced soft, unactionable findings.
 
 - **Tag taxonomy on `code-reviewer` priority #6** (`agents/code-reviewer.md`). Each simplicity finding now carries one of `delete:` / `stdlib:` / `native:` / `yagni:` / `shrink:`, each pairing the cut with what replaces it (name the stdlib function, name the native feature, show the shorter form). Tags are explicitly independent of the Critical/Moderate/Minor severity axis. The `delete:` line carries an exception so a single smoke test / `assert`-based self-check is never flagged as bloat.
 - **`Complexity: net -<N> lines` added to the output format**, omitted when nothing is cuttable. Composes with (does not duplicate) consumer `AGENTS.md` liability discipline, which is inherited at runtime; the taxonomy supplies output format, not philosophy. The rest of ponytail (persona theming, intensity levels, gain/debt skills) was assessed and deliberately not ported - redundant with existing context and a poor fit for `implementer`'s fixed-scope rule.
@@ -46,7 +58,7 @@ Re-add a verify->ship advisory to `phase-tracker`, narrower than the Guard 1 nud
 
 ## v3.3.2 — 2026-06-18
 
-Resolve `piSuperpowers.specCouncil` from two settings files instead of one. A session skipped the council because the agent read the repo-local `.pi/settings.json` (which had no `specCouncil`) as if it were the preset file, fell back to the single-`worker` critique, and reported it as a config problem. The council was correctly configured in `$PI_CODING_AGENT_DIR/settings.json` the whole time.
+Resolve `piGauntlet.specCouncil` from two settings files instead of one. A session skipped the council because the agent read the repo-local `.pi/settings.json` (which had no `specCouncil`) as if it were the preset file, fell back to the single-`worker` critique, and reported it as a config problem. The council was correctly configured in `$PI_CODING_AGENT_DIR/settings.json` the whole time.
 
 - **Two-file council resolution with repo precedence** (`brainstorming`, `roasting-the-spec`). Lookup order: (1) `<repo-root>/.pi/settings.json` (worktree root via `git rev-parse --show-toplevel`) — wins if it **defines** `specCouncil`, including an empty `members` as an explicit "no council for this repo"; (2) `$PI_CODING_AGENT_DIR/settings.json` — consulted only when the repo file does not define the key. First file that defines `specCouncil` wins; no cross-file merge.
 - **Explicit anti-footgun note.** Both skills now warn to expand `$PI_CODING_AGENT_DIR` and never substitute a hardcoded project path for it — the repo-local `.pi/settings.json` and the preset file are different files. Reading one as the other was the original miss.
@@ -55,7 +67,7 @@ Resolve `piSuperpowers.specCouncil` from two settings files instead of one. A se
 
 Revert the v3.2.0/v3.3.0 removal of `bash` from the spec-council personas. The removal regressed council runs from 363/363 historical synthesis-reach to 0/2.
 
-- **Restored `bash` on `spec-council-member` and `spec-council-synthesizer`** (`tools: read, grep, find, ls, bash`). `roasting-the-spec` dispatches members with an `output:` path, and pi-subagents injects a `Write your findings to: <path>` instruction into every such task. With no write-capable tool the member was ordered to write a file it could not write: observed failures were 87-byte preamble stubs (glm-5) and stalls (gpt-5.5 at `xhigh`), with critique content lost before the chair saw it. The v3.3.0 rationale ("critiques are response text so `bash` was never in the output path") was empirically false - `bash` IS the output path: members do read-only verification (`grep`/`wc`/`find`) then `cat > <output>`. Forward fix only; the v3.3.0 flow-guard changes are untouched.
+- **Restored `bash` on `spec-council-member` and `spec-council-synthesizer`** (`tools: read, grep, find, ls, bash`). `roasting-the-spec` dispatches members with an `output:` path, and pi-cohort injects a `Write your findings to: <path>` instruction into every such task. With no write-capable tool the member was ordered to write a file it could not write: observed failures were 87-byte preamble stubs (glm-5) and stalls (gpt-5.5 at `xhigh`), with critique content lost before the chair saw it. The v3.3.0 rationale ("critiques are response text so `bash` was never in the output path") was empirically false - `bash` IS the output path: members do read-only verification (`grep`/`wc`/`find`) then `cat > <output>`. Forward fix only; the v3.3.0 flow-guard changes are untouched.
 
 ## v3.3.0 — 2026-06-18
 
@@ -72,7 +84,7 @@ Refine the v3.2.0 flow guards based on observed behavior: Guard 1 was phantom si
 
 Add three advisory flow guards to `phase-tracker`, harden the spec-council personas to read-only bash, and pass explicit `cwd` on council/worker dispatches - mitigating worktree-discipline, finish-handoff, and spec-phase-mutation drift observed in session history, without adding skill-body prose.
 
-- **`phase-tracker` flow guards (advisory, default-on, `piSuperpowers.flowGuards.enforce`).** (1) Finish handoff: `complete implement` / `complete verify` (and the plan-tracker auto-complete) append a next-step nudge toward `start verify` and `/skill:finishing-a-development-branch`. (2) Worktree discipline: in-place `git switch` / `git checkout -b` during brainstorm/plan/implement warns, gated by an init-time primary-checkout-vs-worktree check (`--git-dir` vs `--git-common-dir`), exempting `git worktree` and plain file checkout; warns once per phase. (3) Spec-phase confinement: `write`/`edit` or bash mutation (`>`/`>>`/`tee`/`sed -i`/`git apply`) outside `flowGuards.specDirs` (default `["doc/specs"]`) during brainstorm warns; warns once per brainstorm. All three never block.
+- **`phase-tracker` flow guards (advisory, default-on, `piGauntlet.flowGuards.enforce`).** (1) Finish handoff: `complete implement` / `complete verify` (and the plan-tracker auto-complete) append a next-step nudge toward `start verify` and `/skill:finishing-a-development-branch`. (2) Worktree discipline: in-place `git switch` / `git checkout -b` during brainstorm/plan/implement warns, gated by an init-time primary-checkout-vs-worktree check (`--git-dir` vs `--git-common-dir`), exempting `git worktree` and plain file checkout; warns once per phase. (3) Spec-phase confinement: `write`/`edit` or bash mutation (`>`/`>>`/`tee`/`sed -i`/`git apply`) outside `flowGuards.specDirs` (default `["doc/specs"]`) during brainstorm warns; warns once per brainstorm. All three never block.
 - **Spec-council personas pinned to read-only bash.** `spec-council-member` and `spec-council-synthesizer` bodies now forbid mutating via `bash` (write/redirect/edit/stage/commit/build) - closing the gap where a member "ignores its tools" and mutates through bash. Best-effort: council sessions have no runtime guard.
 - **Explicit `cwd` on council/worker dispatches.** `roasting-the-spec` (member fan-out + chair) and `brainstorming` (fresh-worker critique) now pass `cwd: <worktree>` (from `git rev-parse --show-toplevel`), so subagents stop inheriting pi's primary-checkout launch dir. `subagent-driven-development` already pins `cwd` and is unchanged.
 
@@ -89,10 +101,10 @@ Collapse the redundant end-of-flow gate and make documentation a spec-owned deci
 
 **Fix:** `roasting-the-spec` now passes `control: { needsAttentionAfterMs: 600000 }` on both the member fan-out and the chair dispatch, suppressing false-positive "needs attention (no observed activity for Xs)" notices on the spec council.
 
-- **Root cause.** pi-subagents' subagent-control derives `needs_attention` from `now - lastActivityAt`, and `lastActivityAt` advances only on discrete child events (`tool_execution_start/end`, `tool_result_end`, `message_end`) — there is no in-turn/streaming signal. Council members and the chair each run one long, tool-less reasoning turn, so they cross the 60s default with zero activity events and get flagged stale despite being healthy (observed 180 false positives; one real turn ran 506s).
+- **Root cause.** pi-cohort's subagent-control derives `needs_attention` from `now - lastActivityAt`, and `lastActivityAt` advances only on discrete child events (`tool_execution_start/end`, `tool_result_end`, `message_end`) — there is no in-turn/streaming signal. Council members and the chair each run one long, tool-less reasoning turn, so they cross the 60s default with zero activity events and get flagged stale despite being healthy (observed 180 false positives; one real turn ran 506s).
 - **Fix placement.** `control` is a **run-level** param: `resolveControlConfig` reads only top-level `effectiveParams.control`, and the parallel per-task schema (`TaskItem`) has no `control` field. So the override sits beside `tasks` on the member call (not inside `members.map(...)`, where it would be silently dropped) and beside `agent`/`model`/`reads` on the single chair call.
 - **10 min, not disabled.** Raising the idle threshold to 600000 ms keeps attention tracking on so a genuinely wedged run can still surface.
-- **Skill-only.** No pi-subagents change.
+- **Skill-only.** No pi-cohort change.
 
 ## v3.0.1 — 2026-06-15
 
@@ -123,7 +135,7 @@ Harden the v2.2.0 lint/critique split against the two runtime-legibility regress
 Split brainstorming's spec self-review into an inline lint and an auto-dispatched critique, so the judgment half runs with fresh eyes off the main loop while the mechanical half stays cheap and inline.
 
 - **`brainstorming` self-review is now two stages.** Placeholder scan + internal consistency stay **inline** at the main loop (the lint). Scope + ambiguity become the **critique pass**, never run inline.
-- **The critique is auto-dispatched, not offered.** When `piSuperpowers.specCouncil.members` is configured, brainstorming auto-invokes `/skill:roasting-the-spec` (the council *is* the critique pass — the prior numbered offer is gone; config = consent). When no council is configured, it dispatches a single fresh `worker` that applies the scope + ambiguity checks and auto-applies fixes in place. The worker surfaces any ambiguity it could not safely resolve to the user gate.
+- **The critique is auto-dispatched, not offered.** When `piGauntlet.specCouncil.members` is configured, brainstorming auto-invokes `/skill:roasting-the-spec` (the council *is* the critique pass — the prior numbered offer is gone; config = consent). When no council is configured, it dispatches a single fresh `worker` that applies the scope + ambiguity checks and auto-applies fixes in place. The worker surfaces any ambiguity it could not safely resolve to the user gate.
 - **`brainstorming` owns the config gate.** `roasting-the-spec` drops its offer block and is invoked only after brainstorming confirms `members` is non-empty; absent/empty/malformed config never reaches it.
 - **`worker` model is documentation-only.** The dispatch passes no `model:`; it resolves from `subagents.agentOverrides.worker.model` (unset → inherits the main loop). Fresh context isolates the critique regardless; cost offload depends on the consumer's override.
 - **No agent or extension changes.** `spec-reviewer` was explicitly rejected as the wrong persona (its prompt targets implementation-vs-spec compliance, and no code exists at brainstorm time). Scope/recon delegation was considered and dropped (no real gain — brainstorming recon is adaptive and feeds the interactive loop).
@@ -134,13 +146,13 @@ Split brainstorming's spec self-review into an inline lint and an auto-dispatche
 Enforce the closing loop deterministically. A consumer session completed the verify phase off a code-reviewer verdict alone after a context pruner dropped the skill text mandating the conformance-reviewer dispatch — prompt-level compliance is not enough for the last correctness gate.
 
 - **`phase_tracker complete verify` now rejects** unless a successful `conformance-reviewer` dispatch (child result with `exitCode: 0`) has been observed since the last `reset`. Management-mode calls and async dispatches never qualify. The rejection message instructs: dispatch the reviewer, or record an explicit user waiver via `skip` — no `force` bypass on `complete`.
-- **Config:** `piSuperpowers.closureReview.enforce` (default `true`). Default-on is deliberate: pi-subagents is mandatory for consumers, and opt-in enforcement would let a preset silently re-inherit the observed failure.
+- **Config:** `piGauntlet.closureReview.enforce` (default `true`). Default-on is deliberate: pi-cohort is mandatory for consumers, and opt-in enforcement would let a preset silently re-inherit the observed failure.
 - **`executing-plans` Step 5 wired to the phase tracker.** It dispatched the reviewer but never called `start`/`complete verify`, so the gate could not fire on that path. The mandate is unchanged; the step now enters and closes the phase explicitly.
 - **Docs:** README phase-tracker gate + `closureReview.enforce`; AGENTS.md extension table.
 
 ## v2.0.0 — 2026-06-11
 
-Make the thinking budget a per-preset config knob for the working agents. pi-subagents `agentOverrides` only fill fields the frontmatter left **unset** (`agents.ts` fill semantics), so the previous frontmatter pins silently swallowed any `subagents.agentOverrides.<agent>.thinking` a preset supplied — and made it impossible to run the personas on non-thinking models.
+Make the thinking budget a per-preset config knob for the working agents. pi-cohort `agentOverrides` only fill fields the frontmatter left **unset** (`agents.ts` fill semantics), so the previous frontmatter pins silently swallowed any `subagents.agentOverrides.<agent>.thinking` a preset supplied — and made it impossible to run the personas on non-thinking models.
 
 - **Breaking: `thinking:` removed from `implementer`, `code-reviewer`, `spec-reviewer` frontmatter.** Presets now own the budget via `subagents.agentOverrides.<agent>.thinking`; `false` → provider default (non-thinking models). Unset → provider default for the resolved model.
 - **Migration:** add to each preset's `settings.json` — recommended `implementer: medium`, `code-reviewer: high`, `spec-reviewer: medium`. Without overrides the agents no longer run at the previously pinned levels.
@@ -158,11 +170,11 @@ Make phase tracking explicit and scoped to superpowers flows, and reset both tra
 
 ## v1.2.1 — 2026-06-09
 
-Move the `conformance-reviewer` model config from `subagents.agentOverrides.conformance-reviewer` to `piSuperpowers.closureReview.model`, injected **call-site** by the verify-step skills — the same mechanism the spec-council chair uses. Consolidates all pi-superpowers quality-lever model config under the `piSuperpowers.*` namespace (council + closure gate discoverable in one place) and gives the gate's model call-site precedence.
+Move the `conformance-reviewer` model config from `subagents.agentOverrides.conformance-reviewer` to `piGauntlet.closureReview.model`, injected **call-site** by the verify-step skills — the same mechanism the spec-council chair uses. Consolidates all pi-superpowers quality-lever model config under the `piGauntlet.*` namespace (council + closure gate discoverable in one place) and gives the gate's model call-site precedence.
 
-- **Config key changed.** Pin the gate via `settings.json#piSuperpowers.closureReview.model` (was `subagents.agentOverrides.conformance-reviewer`). The verify steps of `subagent-driven-development` / `executing-plans` / `verification-before-completion` read it from `$PI_CODING_AGENT_DIR/settings.json` and pass `model:` call-site; unset → omit → inherit the parent's model; unreachable → retry once inherited.
+- **Config key changed.** Pin the gate via `settings.json#piGauntlet.closureReview.model` (was `subagents.agentOverrides.conformance-reviewer`). The verify steps of `subagent-driven-development` / `executing-plans` / `verification-before-completion` read it from `$PI_CODING_AGENT_DIR/settings.json` and pass `model:` call-site; unset → omit → inherit the parent's model; unreachable → retry once inherited.
 - **`thinking` stays frontmatter-pinned** at `xhigh` (not call-site overridable), so the config supplies only `model` — the dedicated persona is what guarantees max reasoning + fresh context regardless of the model pin.
-- **Migration:** consumers replace `subagents.agentOverrides.conformance-reviewer` with `piSuperpowers.closureReview.model` in each preset. No persona or dispatch-shape change; `conformance-reviewer` still ships model-free.
+- **Migration:** consumers replace `subagents.agentOverrides.conformance-reviewer` with `piGauntlet.closureReview.model` in each preset. No persona or dispatch-shape change; `conformance-reviewer` still ships model-free.
 - **Docs:** README (`Conformance gate model`), `AGENTS.md` rationale.
 
 ## v1.2.0 — 2026-06-09
@@ -213,7 +225,7 @@ Root cause: `plan_tracker` is execution-only by intent, but nothing enforced it.
 
 ## v1.1.0 — 2026-06-04
 
-- **verification-before-completion:** add a deliverable-vs-spec conformance gate. New `reference/conformance-check.md` instructs the verify phase to confront deliverables (code **and** docs) against the requirements, with a fresh-context reviewer (`code-reviewer`) as the primary path — it reads the spec + verbatim original prompt + diff cold, sidestepping the main session's build-it-then-bless-it bias. Source-of-truth priority: written spec (canonical) → original prompt (inline requirements) → ticket re-fetch as fallback only when no spec exists. Spec↔prompt/ticket drift is a red flag that must be reconciled, not silently absorbed. Default coverage contract is 1 ticket = 1 spec = code satisfying every AC (explicit + implicit notes from body/comments); multi-spec efforts are allowed only when the spec explicitly declares its subset and names deferred ACs. SKILL.md changes are purely additive (one Common Failures row, one Key Patterns block) so obra-sync stays conflict-free; ticket-resolution mechanics stay in the consumer's `superpowers-overrides.md`.
+- **verification-before-completion:** add a deliverable-vs-spec conformance gate. New `reference/conformance-check.md` instructs the verify phase to confront deliverables (code **and** docs) against the requirements, with a fresh-context reviewer (`code-reviewer`) as the primary path — it reads the spec + verbatim original prompt + diff cold, sidestepping the main session's build-it-then-bless-it bias. Source-of-truth priority: written spec (canonical) → original prompt (inline requirements) → ticket re-fetch as fallback only when no spec exists. Spec↔prompt/ticket drift is a red flag that must be reconciled, not silently absorbed. Default coverage contract is 1 ticket = 1 spec = code satisfying every AC (explicit + implicit notes from body/comments); multi-spec efforts are allowed only when the spec explicitly declares its subset and names deferred ACs. SKILL.md changes are purely additive (one Common Failures row, one Key Patterns block) so obra-sync stays conflict-free; ticket-resolution mechanics stay in the consumer's `gauntlet-overrides.md`.
 
 ## v1.0.3 — 2026-06-02
 
@@ -236,7 +248,7 @@ Root cause: `plan_tracker` is execution-only by intent, but nothing enforced it.
 
 ## v0.5.0 — 2026-05-31
 
-- **roasting-the-spec:** new skill — an optional, per-preset multi-model spec critique that runs inside `brainstorming` between self-review and the user gate. Each council member runs on a different model (`piSuperpowers.specCouncil.members`), a neutral chair (`spec-council-synthesizer`) consolidates and adjudicates their critiques, the parent proposes dispositions, and the user approves what lands. Off unless configured.
+- **roasting-the-spec:** new skill — an optional, per-preset multi-model spec critique that runs inside `brainstorming` between self-review and the user gate. Each council member runs on a different model (`piGauntlet.specCouncil.members`), a neutral chair (`spec-council-synthesizer`) consolidates and adjudicates their critiques, the parent proposes dispositions, and the user approves what lands. Off unless configured.
 - **agents:** add `spec-council-member` (adversarial single-model spec critic, `thinking: xhigh`) and `spec-council-synthesizer` (neutral consolidating chair, `thinking: xhigh`). Both are model-free; `roasting-the-spec` injects the model per task. Brings the shipped persona count to five.
 - **brainstorming:** add a one-section hook offering the spec council before the user review gate when configured; unchanged when not.
 
@@ -247,17 +259,17 @@ Root cause: `plan_tracker` is execution-only by intent, but nothing enforced it.
 - **verification-before-completion:** documented default test commands now list `pnpm test`/`yarn test`, matching the `verify-before-ship` extension and README.
 - **test-driven-development:** prerequisite is an active worktree, not just a non-`main` branch.
 - **brainstorming:** First-Feature Oversight and single-source-of-truth guidance made stack-agnostic (removed Rails/Django-specific vocabulary).
-- **dispatching-parallel-agents:** replaced the session-specific narrative with a dense pi-subagents integration reference (parallel mode, fresh context, `worktree: true` isolation, agent choice, output capture).
+- **dispatching-parallel-agents:** replaced the session-specific narrative with a dense pi-cohort integration reference (parallel mode, fresh context, `worktree: true` isolation, agent choice, output capture).
 
 ## v0.4.0 — 2026-05-30
 
-- **install-agents:** user installs now symlink personas into `getAgentDir()/agents` (`$PI_CODING_AGENT_DIR/agents`, default `~/.pi/agent/agents`) instead of the global `~/.agents/`. This is pi-subagents' profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, `agent.bedrock`, …) gets its own personas and stops sharing one global dir. Project installs are unchanged (copy into `<repo>/.pi/agents/`).
-- **install-agents:** migration — older versions symlinked into `~/.agents/`, which pi-subagents still discovers and which *wins* over `getAgentDir()/agents` on name collisions. User installs now remove stale `~/.agents/<name>.md` symlinks that resolve into a pi-superpowers package so they no longer shadow the profile-scoped install. Real files and unrelated symlinks in `~/.agents/` are left untouched.
-- **install-agents:** `PI_SUPERPOWERS_AGENT_DIR` override now expands a leading `~`/`~/`.
+- **install-agents:** user installs now symlink personas into `getAgentDir()/agents` (`$PI_CODING_AGENT_DIR/agents`, default `~/.pi/agent/agents`) instead of the global `~/.agents/`. This is pi-cohort's profile-scoped user dir, so each pi profile (`agent`, `agent.anthropic`, `agent.bedrock`, …) gets its own personas and stops sharing one global dir. Project installs are unchanged (copy into `<repo>/.pi/agents/`).
+- **install-agents:** migration — older versions symlinked into `~/.agents/`, which pi-cohort still discovers and which *wins* over `getAgentDir()/agents` on name collisions. User installs now remove stale `~/.agents/<name>.md` symlinks that resolve into a pi-superpowers package so they no longer shadow the profile-scoped install. Real files and unrelated symlinks in `~/.agents/` are left untouched.
+- **install-agents:** `PI_GAUNTLET_AGENT_DIR` override now expands a leading `~`/`~/`.
 
 ## v0.3.0 — 2026-05-30
 
-- **install-agents:** project installs now copy personas into `<repo>/.pi/agents/` (project scope) instead of symlinking into the global `~/.agents/`. Previously every install — user or project — wrote to the shared `~/.agents/` keyed by filename, so personas were effectively global across all pi profiles and the last install to run won the symlink. The installer now detects whether the package lives under `<repo>/.pi/...` (project → copy, install-managed, gitignored) or `<home>/.pi/<profile>/...` (user → symlink into `~/.agents/`, unchanged). Local-path dev installs and `PI_SUPERPOWERS_AGENT_DIR` keep symlink behavior. Project scope wins over user scope on name collisions, so per-repo installs are now independent.
+- **install-agents:** project installs now copy personas into `<repo>/.pi/agents/` (project scope) instead of symlinking into the global `~/.agents/`. Previously every install — user or project — wrote to the shared `~/.agents/` keyed by filename, so personas were effectively global across all pi profiles and the last install to run won the symlink. The installer now detects whether the package lives under `<repo>/.pi/...` (project → copy, install-managed, gitignored) or `<home>/.pi/<profile>/...` (user → symlink into `~/.agents/`, unchanged). Local-path dev installs and `PI_GAUNTLET_AGENT_DIR` keep symlink behavior. Project scope wins over user scope on name collisions, so per-repo installs are now independent.
 
 ## v0.2.0 — 2026-05-28
 
@@ -272,8 +284,8 @@ Root cause: `plan_tracker` is execution-only by intent, but nothing enforced it.
 
 ## v0.1.2 — 2026-05-28
 
-- **Agents:** add `thinking`, `defaultContext`, `inheritSkills` frontmatter to all three personas. Previously these knobs were documented in `AGENTS.md` but missing from the agent files, so dispatch fell back to pi-subagents defaults (typically `thinking: high`, no defaultContext override). Now: reviewers use `thinking: high` + `defaultContext: fresh`; implementer uses `thinking: medium` + `defaultContext: fork`. All three use `inheritSkills: false` to prevent recursive skill discovery in dispatched children.
-- **AGENTS.md:** correct false claim that `plan-tracker.ts` accepts settings — it has no configurable knobs. Tighten the package-conventions section. Document the divergence from `obra/superpowers` v5.1.0 (they dropped `agents/`, we keep them as pi-subagents profiles) and explain why `using-superpowers` is intentionally absent.
+- **Agents:** add `thinking`, `defaultContext`, `inheritSkills` frontmatter to all three personas. Previously these knobs were documented in `AGENTS.md` but missing from the agent files, so dispatch fell back to pi-cohort defaults (typically `thinking: high`, no defaultContext override). Now: reviewers use `thinking: high` + `defaultContext: fresh`; implementer uses `thinking: medium` + `defaultContext: fork`. All three use `inheritSkills: false` to prevent recursive skill discovery in dispatched children.
+- **AGENTS.md:** correct false claim that `plan-tracker.ts` accepts settings — it has no configurable knobs. Tighten the package-conventions section. Document the divergence from `obra/superpowers` v5.1.0 (they dropped `agents/`, we keep them as pi-cohort profiles) and explain why `using-superpowers` is intentionally absent.
 - **README.md:** rewrite for human readability, expand the project-overrides section with a concrete example, fix the version pin from `v0.1.0` to `v0.1.1`.
 - **skills/writing-skills/SKILL.md:** drop project-specific references; broaden the "Where Skills Live in Pi" table to include the package-distributed path; update extension references to reflect package distribution.
 

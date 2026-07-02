@@ -26,7 +26,7 @@ Work flows `origin (prompt + spec) → plan → code/doc`. Every hop is lossy: a
 |---|---|---|
 | 1 | The written spec (`doc/specs/…`) | Canonical. Brainstorm already fetched the ticket, reconciled its ACs, and recorded deviations here. |
 | 2 | Original prompt (verbatim) | Catches inline requirements never folded into the spec. |
-| 3 | Re-fetch the ticket | **Fallback only**, when no spec exists. Skip when a spec exists — the live ticket may have drifted. The project's issue-tracker skill (for this fallback) is named in `.pi/superpowers-overrides.md`. |
+| 3 | Re-fetch the ticket | **Fallback only**, when no spec exists. Skip when a spec exists — the live ticket may have drifted. The project's issue-tracker skill (for this fallback) is named in `.pi/gauntlet-overrides.md`. |
 
 ## Process
 

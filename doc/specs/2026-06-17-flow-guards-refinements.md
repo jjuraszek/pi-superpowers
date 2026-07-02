@@ -1,6 +1,6 @@
 # Spec: flow-guards refinements (drop the finish nudge, harden worktree guard to a block, drop council bash, fix 2 false positives + a startup-hang)
 
-Refines the v3.2.0 flow guards (`doc/specs/2026-06-17-superpowers-flow-guards.md`) after independent verification against gridstrong session history and a false-positive / feasibility review. Target release: **v3.3.0** (minor - no config-schema break, no agent rename, no extension API removal).
+Refines the v3.2.0 flow guards (`doc/specs/2026-06-17-gauntlet-flow-guards.md`) after independent verification against consumer-project session history and a false-positive / feasibility review. Target release: **v3.3.0** (minor - no config-schema break, no agent rename, no extension API removal).
 
 ## Context
 
@@ -8,7 +8,7 @@ Six changes (Findings A-F), each grounded below. Three reverse or tighten v3.2.0
 
 ### Finding A - Guard 1 (finish/verify nudges) addresses a phantom; remove it
 
-v3.2.0 issue 1 claimed "dozens of sessions `start implement` and never reach ship." Re-measured against the **same source** (gridstrong `agent.anthropic` sessions, 2026-06-01..17), separating subagent-child sessions (`parentSession` set) from main-loop sessions - the v3.2.0 evidence did not:
+v3.2.0 issue 1 claimed "dozens of sessions `start implement` and never reach ship." Re-measured against the **same source** (consumer-project `agent.anthropic` sessions, 2026-06-01..17), separating subagent-child sessions (`parentSession` set) from main-loop sessions - the v3.2.0 evidence did not:
 
 | Window | main-loop sessions entering `implement` | shipped in-session | subagent children excluded |
 |---|---|---|---|
@@ -21,12 +21,12 @@ v3.2.0 issue 1 claimed "dozens of sessions `start implement` and never reach shi
 - "shipped in-session" = a `git merge --squash`, `gh pr create`/`merge`, `script/worktree destroy`, or `ship` phase start observed in that session.
 - **23/23 main-loop `implement` sessions shipped**, before and after v3.0.0. Zero drift-to-no-ship.
 - The "dozens never reach ship" signal was ~147 subagent **implementer children** that never ship *by design* (one task in a fan-out wave), miscounted as main-loop sessions.
-- Outcome cross-check: gridstrong has **529 commits to `main` since 06-03** (squash-merge - `git log --merges` is empty), continuous `(#NNNN)` PR + squash throughput. Work reaches `main` heavily.
+- Outcome cross-check: consumer-project has **529 commits to `main` since 06-03** (squash-merge - `git log --merges` is empty), continuous `(#NNNN)` PR + squash throughput. Work reaches `main` heavily.
 - Most of the 23 sessions predate the 06-17 nudge, so they shipped **without** Guard 1 - via existing skill prose (`subagent-driven-development` Step 5 -> `finishing-a-development-branch`) that demonstrably works.
 
 Conclusion: both nudges (`IMPLEMENT_NUDGE`, `VERIFY_NUDGE`) target a population that, at the main-loop level, does not exhibit the failure. The `closureReview` hard gate (`CLOSURE_GATE_ERROR`) already enforces the closing loop and is **retained unchanged**. Remove Guard 1 entirely.
 
-Caveat (stated, not blocking): only the `agent.anthropic` preset's gridstrong sessions were analyzed; `bedrock`/`openai`/default presets and non-pi harnesses were not. The v3.2.0 evidence drew from the same source, so the child-session confound applies regardless of preset.
+Caveat (stated, not blocking): only the `agent.anthropic` preset's consumer-project sessions were analyzed; `bedrock`/`openai`/default presets and non-pi harnesses were not. The v3.2.0 evidence drew from the same source, so the child-session confound applies regardless of preset.
 
 ### Finding B - Guard 2's main-loop half can be closed deterministically (advisory -> hard block)
 
@@ -82,7 +82,7 @@ This contradicts the v3.2.0 guarantee "scratch paths are exempt." Extend the scr
 | Remove `bash`; delete read-only-bash clause | `agents/spec-council-synthesizer.md` | edit |
 | Flow-guards section: two guards (worktree=blocks, spec-phase=advisory); drop finish-handoff bullet | `README.md` | edit |
 | Knobs table `tools` row (council columns) -> `read, grep, find, ls`; rewrite the council-bash rationale prose | `AGENTS.md` | edit |
-| Add "superseded in part" note (Guard 1 removed; Guard 2 blocks; council bash removed) | `doc/specs/2026-06-17-superpowers-flow-guards.md` | edit |
+| Add "superseded in part" note (Guard 1 removed; Guard 2 blocks; council bash removed) | `doc/specs/2026-06-17-gauntlet-flow-guards.md` | edit |
 | v3.3.0 entry | `CHANGELOG.md` | edit |
 | `3.2.0` -> `3.3.0` | `package.json` | edit |
 
@@ -191,9 +191,9 @@ Replace `branchWarning` (now block-only; "ignore this" wording no longer applies
 ```ts
 const branchBlockReason = (phase: Phase): string =>
   `Branch switch/creation in the primary checkout is blocked during the ${phase} phase. ` +
-  "Superpowers flows run in a dedicated worktree (git worktree add ... is allowed here); " +
+  "Gauntlet flows run in a dedicated worktree (git worktree add ... is allowed here); " +
   "create/enter one with /skill:using-git-worktrees and run this there. " +
-  "To override, set piSuperpowers.flowGuards.enforce: false.";
+  "To override, set piGauntlet.flowGuards.enforce: false.";
 ```
 
 Retained exemptions (unchanged): `GIT_WORKTREE`, plain `git checkout <file>` (no `-b/-B`), `ship` phase excluded (`activeGuardPhase` only spans brainstorm/plan/implement), `inPrimaryCheckout` gating, `flowGuards.enforce: false`. The `firedGuards` map and its `clear()` calls remain - Guard 3 still uses them; only Guard 2's `"branch"` key usage is removed.
@@ -269,7 +269,7 @@ On timeout (or any error) `execSync` throws -> existing `catch` -> `inPrimaryChe
 - Knobs table `tools` row: the `spec-council-member` and `spec-council-synthesizer` columns change from `read, grep, find, ls, bash` to `read, grep, find, ls`.
 - Rewrite the line beginning "Both `spec-council-*` personas additionally pin `bash` to read-only..." to state both personas **omit** `bash` (deterministic control vs best-effort clause; static checks covered by read/grep/find/ls; critiques delivered as response text so bash was never in the output path).
 
-`doc/specs/2026-06-17-superpowers-flow-guards.md` - add a top note: superseded in part by this spec (Guard 1 removed; Guard 2 now a hard block; `bash` removed from council personas). Keep the original as the historical record.
+`doc/specs/2026-06-17-gauntlet-flow-guards.md` - add a top note: superseded in part by this spec (Guard 1 removed; Guard 2 now a hard block; `bash` removed from council personas). Keep the original as the historical record.
 
 `CHANGELOG.md` - v3.3.0 entry summarizing Findings A-F.
 

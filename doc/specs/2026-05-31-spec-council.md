@@ -6,7 +6,7 @@
 
 This adds an **optional, per-preset-configured** multi-model critique pass that runs after self-review and before the user gate. The core mechanic: N members, each a **different model**, critique the spec in parallel for divergent angles; a neutral **chair** consolidates and **adjudicates** their disagreements; the parent proposes dispositions; the **user** is the final jury.
 
-The council is invisible unless configured. With no `piSuperpowers.specCouncil` in the active preset's settings, brainstorming behaves exactly as it does today.
+The council is invisible unless configured. With no `piGauntlet.specCouncil` in the active preset's settings, brainstorming behaves exactly as it does today.
 
 ## Scope
 
@@ -54,18 +54,18 @@ The chair adjudicates *between members* (whose argument is stronger), not in def
 | Skill dir | `skills/roasting-the-spec/SKILL.md` |
 | Member agent | `spec-council-member` (`agents/spec-council-member.md`) |
 | Chair agent | `spec-council-synthesizer` (`agents/spec-council-synthesizer.md`) |
-| Config key | `piSuperpowers.specCouncil` |
+| Config key | `piGauntlet.specCouncil` |
 | Member output file | `<tmpdir>/member-<i>-<model-slug>.md` — absolute path from `mktemp -d`, outside the worktree, removed after apply |
 
 `spec-council-member` sits next to the existing `spec-reviewer` deliberately — they are different jobs: `spec-reviewer` checks an implementation against a spec; `spec-council-member` critiques the spec's own quality.
 
-## Configuration: `piSuperpowers.specCouncil`
+## Configuration: `piGauntlet.specCouncil`
 
-Lives in each preset's `settings.json` (e.g. `~/.pi/agent.anthropic/settings.json`, `~/.pi/agent.bedrock/settings.json`). Mirrors the existing `piSuperpowers.verifyBeforeShip` pattern.
+Lives in each preset's `settings.json` (e.g. `~/.pi/agent.anthropic/settings.json`, `~/.pi/agent.bedrock/settings.json`). Mirrors the existing `piGauntlet.verifyBeforeShip` pattern.
 
 ```jsonc
 {
-  "piSuperpowers": {
+  "piGauntlet": {
     "specCouncil": {
       "members": ["<provider/model>", "<provider/model>", "<provider/model>"],
       "chair": "<provider/model>"
@@ -79,12 +79,12 @@ Lives in each preset's `settings.json` (e.g. `~/.pi/agent.anthropic/settings.jso
 | `members` | `string[]` of `provider/model` | yes | The roster. Council size = array length. Each entry = one member, run under that model. |
 | `chair` | `string` (`provider/model`) | no | Model for the synthesizer. Defaults to the parent's inherited model when omitted. |
 
-**Gating / detection.** The skill instructs the parent to read `$PI_CODING_AGENT_DIR/settings.json` (active preset) and inspect `piSuperpowers.specCouncil.members` by reading the file directly (no brittle `jq`/`python` parse — settings may be JSONC).
+**Gating / detection.** The skill instructs the parent to read `$PI_CODING_AGENT_DIR/settings.json` (active preset) and inspect `piGauntlet.specCouncil.members` by reading the file directly (no brittle `jq`/`python` parse — settings may be JSONC).
 
 - `members` absent / empty / not an array → treat as **unconfigured**: the council is never mentioned, brainstorming proceeds unchanged. Malformed config emits one warning line, then is treated as unconfigured.
 - `members` non-empty → the council is **offered** (single y/n prompt). Each preset's roster diverges naturally because each owns its own `settings.json`.
 
-`agentOverrides` (single-agent model/thinking) is the wrong home — it cannot hold a roster or a chair list. `piSuperpowers.specCouncil` is the canonical location.
+`agentOverrides` (single-agent model/thinking) is the wrong home — it cannot hold a roster or a chair list. `piGauntlet.specCouncil` is the canonical location.
 
 ---
 
@@ -174,7 +174,7 @@ resolved:
 
 All steps are parent-driven (the parent owns orchestration; members and chair do not recurse). Runs **after** brainstorming's Spec Self-Review, **before** its User Review Gate.
 
-**1 — Gate (silent unless configured).** Read `$PI_CODING_AGENT_DIR/settings.json`; inspect `piSuperpowers.specCouncil.members`. Unconfigured → return silently. Configured → ask once:
+**1 — Gate (silent unless configured).** Read `$PI_CODING_AGENT_DIR/settings.json`; inspect `piGauntlet.specCouncil.members`. Unconfigured → return silently. Configured → ask once:
 
 > "Spec council configured (3: opus-4-1, gemini-3-pro, gpt-5.1). Roast the spec? (y/n)"
 
@@ -216,7 +216,7 @@ subagent({
 
 In `skills/brainstorming/SKILL.md`, at the Spec Self-Review → User Review Gate boundary, add one line (kept minimal to preserve a legible diff against obra upstream):
 
-> After self-review, if a spec council is configured (`piSuperpowers.specCouncil`), offer it before the user gate — see `/skill:roasting-the-spec`. Approved edits land in the same worktree spec commit.
+> After self-review, if a spec council is configured (`piGauntlet.specCouncil`), offer it before the user gate — see `/skill:roasting-the-spec`. Approved edits land in the same worktree spec commit.
 
 No other brainstorming changes.
 
@@ -241,7 +241,7 @@ No automated harness exists for prompt-level skills/agents (markdown), and this 
 - **Manual scenarios.** (a) config absent → zero council mention; (b) configured + decline → skip; (c) configured + accept → N members spawn under the correct per-model assignment, chair consolidates + adjudicates, gate shows dispositions, approved edits apply; (d) one bogus roster model → graceful skip + warning; (e) deliberately contradictory members → chair resolves, no quarrel surfaced.
 - **Generic-ness lint** (repo rule): `rg -ni "<company>|/Users/[^/]+|<model-names>" skills/roasting-the-spec/` → zero matches. Models/paths come only from config, never the skill body.
 - **Frontmatter validity.** Both agents parse; `thinking` is `xhigh` for both (member for breadth of critique, chair for adjudication).
-- **Docs.** `AGENTS.md` knobs table carries both agents and reads "Five agents"; `README.md` documents `piSuperpowers.specCouncil`, skills count is 14, personas count is 5 (intro + install mechanics); `CHANGELOG.md` notes the new skill + agents (minor bump).
+- **Docs.** `AGENTS.md` knobs table carries both agents and reads "Five agents"; `README.md` documents `piGauntlet.specCouncil`, skills count is 14, personas count is 5 (intro + install mechanics); `CHANGELOG.md` notes the new skill + agents (minor bump).
 
 ## Implementation checklist
 
@@ -250,5 +250,5 @@ No automated harness exists for prompt-level skills/agents (markdown), and this 
 3. `skills/roasting-the-spec/SKILL.md` — the 6-step recipe; generic body; standard "Project overrides" trailer.
 4. `skills/brainstorming/SKILL.md` — one-line hook.
 5. `AGENTS.md` — "Three agents ship"→"Five"; two new knobs-table columns (both `xhigh`, read-only, `fresh`); rationale line (model injected per task, dispatched by `roasting-the-spec`); note `roasting-the-spec` is original (not obra-synced), so the "13 of obra's 14" coverage line stays accurate.
-6. `README.md` — skills `13`→`14` (+ `roasting-the-spec` in the Design & planning bullet); personas `3`→`5` (+ two bullets); install-mechanics "three agent files"/"three personas" → five (≈ lines 53–56, 106); document `piSuperpowers.specCouncil`.
+6. `README.md` — skills `13`→`14` (+ `roasting-the-spec` in the Design & planning bullet); personas `3`→`5` (+ two bullets); install-mechanics "three agent files"/"three personas" → five (≈ lines 53–56, 106); document `piGauntlet.specCouncil`.
 7. `CHANGELOG.md` — entry (minor bump: new skill + two agents).

@@ -194,7 +194,7 @@ After writing the spec to `<project>/doc/specs/<filename>.md` (per [Filename Con
 
 The first three checks — **placeholder scan**, **internal consistency**, and **documentation named** — are the inline **lint**: run them here at the main loop and fix what they surface. The last two — **scope** and **ambiguity** — are **not** run inline; they are the **critique pass**, auto-dispatched (per [Spec Council](#spec-council-optional)):
 
-- **Council configured** (`piSuperpowers.specCouncil.members` non-empty) → invoke `/skill:roasting-the-spec`; it runs the critique and proposes dispositions.
+- **Council configured** (`piGauntlet.specCouncil.members` non-empty) → invoke `/skill:roasting-the-spec`; it runs the critique and proposes dispositions.
 - **Otherwise** → dispatch one fresh `worker` that applies the scope + ambiguity checks and fixes them in place:
 
   ```
@@ -215,7 +215,7 @@ After the critique pass returns, scan it for load-bearing external references be
 
 ## Spec Council (Optional)
 
-After the inline lint and before the user review gate, **brainstorming owns the critique-pass gate**: resolve `piSuperpowers.specCouncil` from **two** settings files, repo-local first, and select the path.
+After the inline lint and before the user review gate, **brainstorming owns the critique-pass gate**: resolve `piGauntlet.specCouncil` from **two** settings files, repo-local first, and select the path.
 
 Lookup order (first file that **defines** `specCouncil` wins — do not merge across files):
 
@@ -287,4 +287,4 @@ phase_tracker({ action: "complete", phase: "brainstorm" })
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

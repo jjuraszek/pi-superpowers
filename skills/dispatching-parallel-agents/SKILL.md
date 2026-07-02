@@ -88,7 +88,7 @@ subagent({
 
 The top-level `context: "fresh"` applies to every task in the batch. Omitting it produces parallel-but-forked agents that share parent history — the worst of both worlds.
 
-**Editing tasks:** add `worktree: true` so each task's writes are isolated in its own git worktree (see [pi-subagents Integration](#pi-subagents-integration)); omit it only for read-only investigations.
+**Editing tasks:** add `worktree: true` so each task's writes are isolated in its own git worktree (see [pi-cohort Integration](#pi-cohort-integration)); omit it only for read-only investigations.
 
 ### 4. Review and Integrate
 
@@ -153,15 +153,15 @@ Return: Summary of what you found and what you fixed.
 **Exploratory debugging:** You don't know what's broken yet
 **Shared state:** Agents would interfere (editing same files, using same resources)
 
-## pi-subagents Integration
+## pi-cohort Integration
 
-Parallel dispatch rides on the `subagent` tool (the pi-subagents package). Mechanics that matter here:
+Parallel dispatch rides on the `subagent` tool (the pi-cohort package). Mechanics that matter here:
 
 - **Parallel mode** — pass a `tasks` array; entries run concurrently. `concurrency` (default 4) caps how many run at once.
 - **Context** — `context: "fresh"` at the top level applies to every task. Mandatory here (see above); without it `worker` forks parent history and you lose isolation.
 - **Filesystem isolation** — `worktree: true` runs each task in its own git worktree so concurrent edits can't collide. Requires clean git state; each task's diff returns separately for you to integrate. Omit it for read-only investigations.
 - **Worktree base / `cwd`** — under `worktree: true` the base commit is `HEAD` resolved from the **top-level `cwd`**, which defaults to the orchestrator's process cwd. When you orchestrate from inside a git worktree, pass that worktree's absolute path as the top-level `cwd`, or children branch from the wrong checkout. Don't set per-task `cwd` with `worktree: true` — it must equal the shared cwd or the run errors.
-- **Agent choice** — `worker` is the pi-subagents builtin generalist. Use a persona (`implementer`, `code-reviewer`) when you want its system prompt and tool profile. Persona frontmatter (tools, thinking, context) is fixed; only `model`, `task`, `output`, `reads`, `progress`, `skill` are callable per task.
+- **Agent choice** — `worker` is the pi-cohort builtin generalist. Use a persona (`implementer`, `code-reviewer`) when you want its system prompt and tool profile. Persona frontmatter (tools, thinking, context) is fixed; only `model`, `task`, `output`, `reads`, `progress`, `skill` are callable per task.
 - **Output capture** — `output: "<file>"` writes a task's summary to a file instead of inline; add `outputMode: "file-only"` for large results.
 
 ```ts
@@ -177,7 +177,7 @@ subagent({
 })
 ```
 
-For chains, async runs, intercom coordination, and the full agent roster, read the `pi-subagents` skill — this skill covers only the parallel fan-out case.
+For chains, async runs, intercom coordination, and the full agent roster, read the `pi-cohort` skill — this skill covers only the parallel fan-out case.
 
 ## Verification
 
@@ -189,4 +189,4 @@ After agents return:
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

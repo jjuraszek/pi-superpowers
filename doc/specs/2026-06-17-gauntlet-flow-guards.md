@@ -1,10 +1,10 @@
-# Spec: superpowers flow guards (worktree discipline, finish nudge, brainstorm-write confinement)
+# Spec: gauntlet flow guards (worktree discipline, finish nudge, brainstorm-write confinement)
 
 > **superseded in part** by `doc/specs/2026-06-17-flow-guards-refinements.md`: Guard 1 removed; Guard 2 promoted to a hard block; `bash` removed from council personas. The body below is the historical record.
 
 ## Context
 
-Three recurring flow failures were observed across consumer sessions (gridstrong session history, 2026-06-09..17):
+Three recurring flow failures were observed across consumer sessions (consumer-project session history, 2026-06-09..17):
 
 1. **finishing-a-development-branch not auto-invoked after the execution phase.** Dozens of sessions `start implement` (some reach `start verify`) and then never read `finishing-a-development-branch` nor `start ship`. The verify->finishing handoff is prose-only in `subagent-driven-development` Step 5; once `verify` completes, nothing pushes the `ship` phase. The closure gate (spec `2026-06-11-closure-review-verify-gate`) blocks `complete verify` until conformance runs, but the *next* transition is unguarded.
 
@@ -42,7 +42,7 @@ These are enforcement gaps, not missing prose. The fix pushes advisory enforceme
 
 ## Behavior
 
-All three guards read `piSuperpowers.flowGuards.enforce` at event time (absent/undefined -> `true`; `false` -> all three disabled, extension behaves as today). State is in-memory, reconstructed from the session branch exactly like existing phase state — no new persistence.
+All three guards read `piGauntlet.flowGuards.enforce` at event time (absent/undefined -> `true`; `false` -> all three disabled, extension behaves as today). State is in-memory, reconstructed from the session branch exactly like existing phase state — no new persistence.
 
 ### Guard 1 — execution -> verify -> finish nudges
 
@@ -61,7 +61,7 @@ The implement nudge covers the larger at-risk population: many failing sessions 
 
 ### Guard 2 — branch-in-place warning
 
-Active **only when pi was launched in the primary checkout** (not a linked worktree): at extension init, compare `git rev-parse --git-dir` against `--git-common-dir` (equal -> primary checkout; differ -> linked worktree). If launched inside a worktree, the main loop is already isolated and Guard 2 is disabled entirely — this is the correct, cheap detection point and avoids a per-tool-call git subprocess. (Submodule edge: the `--git-dir`/`--git-common-dir` comparison there is git-version-dependent and irrelevant; superpowers flows do not run inside submodule git internals, and whichever way it resolves, the guard merely staying off in that edge case is harmless.)
+Active **only when pi was launched in the primary checkout** (not a linked worktree): at extension init, compare `git rev-parse --git-dir` against `--git-common-dir` (equal -> primary checkout; differ -> linked worktree). If launched inside a worktree, the main loop is already isolated and Guard 2 is disabled entirely — this is the correct, cheap detection point and avoids a per-tool-call git subprocess. (Submodule edge: the `--git-dir`/`--git-common-dir` comparison there is git-version-dependent and irrelevant; gauntlet flows do not run inside submodule git internals, and whichever way it resolves, the guard merely staying off in that edge case is harmless.)
 
 While `brainstorm`, `plan`, or `implement` is `in_progress` (and Guard 2 is active), when a `bash` command performs a branch switch/creation in place, prepend an advisory warning to that bash result.
 
@@ -74,7 +74,7 @@ Warning text:
 
 ```
 ⚠️ Branch switch/creation in place during the <phase> phase.
-Superpowers flows run in a dedicated worktree, not by switching branches in the
+Gauntlet flows run in a dedicated worktree, not by switching branches in the
 primary checkout. Create/enter one with /skill:using-git-worktrees, or — if you
 are already inside a worktree — ignore this.
 ```
@@ -87,7 +87,7 @@ are already inside a worktree — ignore this.
 
 While `brainstorm` is `in_progress`, when a `write` or `edit` targets a path **outside** the configured spec directories, prepend an advisory warning to that tool result.
 
-- Spec dirs from `piSuperpowers.flowGuards.specDirs` (default `["doc/specs"]`). A path qualifies if a configured string appears as a **contiguous subsequence of the normalized path components** (split on `/`). Default `doc/specs` matches `.../doc/specs/...` but not `.../doc/other/...`, and not a bare `doc/` component. Both `doc/specs/x.md` and `dashboard/doc/specs/x.md` pass.
+- Spec dirs from `piGauntlet.flowGuards.specDirs` (default `["doc/specs"]`). A path qualifies if a configured string appears as a **contiguous subsequence of the normalized path components** (split on `/`). Default `doc/specs` matches `.../doc/specs/...` but not `.../doc/other/...`, and not a bare `doc/` component. Both `doc/specs/x.md` and `dashboard/doc/specs/x.md` pass.
 - Path source: `input.path` (write/edit), normalized then component-matched. Relative and absolute both work.
 
 Warning text:
@@ -137,10 +137,10 @@ A dispatched child inherits the parent **process** cwd (pi's launch dir), not th
 
 | Key | Type | Default | Meaning |
 |---|---|---|---|
-| `piSuperpowers.flowGuards.enforce` | boolean | `true` | Enable all three advisory flow guards |
-| `piSuperpowers.flowGuards.specDirs` | string[] | `["doc/specs"]` | Path components that count as a spec directory (Guard 3) |
+| `piGauntlet.flowGuards.enforce` | boolean | `true` | Enable all three advisory flow guards |
+| `piGauntlet.flowGuards.specDirs` | string[] | `["doc/specs"]` | Path components that count as a spec directory (Guard 3) |
 
-New key under `piSuperpowers`, sibling to `closureReview` and `specCouncil`. Default-on matches the `closureReview.enforce` precedent: the failures are silent and frequent, so opt-out (not opt-in) is the safe default. The guards are advisory, so default-on cannot break a build — worst case is an unwanted warning line, removable via `enforce: false`.
+New key under `piGauntlet`, sibling to `closureReview` and `specCouncil`. Default-on matches the `closureReview.enforce` precedent: the failures are silent and frequent, so opt-out (not opt-in) is the safe default. The guards are advisory, so default-on cannot break a build — worst case is an unwanted warning line, removable via `enforce: false`.
 
 ## Verification
 

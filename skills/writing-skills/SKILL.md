@@ -29,7 +29,7 @@ Pi discovers skills from multiple roots (see `docs/skills.md` in `@earendil-work
 | `.agents/skills/<name>/SKILL.md` (any ancestor) | Cross-harness, project | Skills shared with Claude Code, Codex, etc. |
 | `~/.pi/agent/skills/<name>/SKILL.md` | User-global, pi-only | Personal skills |
 | `~/.agents/skills/<name>/SKILL.md` | User-global, cross-harness | Personal skills shared with other harnesses |
-| Installed packages (`skills/` dir, `pi.skills` in `package.json`) | Package-scoped | Reusable skill libraries like `pi-superpowers` |
+| Installed packages (`skills/` dir, `pi.skills` in `package.json`) | Package-scoped | Reusable skill libraries like `pi-gauntlet` |
 
 Each skill directory contains:
 ```
@@ -63,7 +63,7 @@ Read directly when SKILL.md tells you to (path is given inline). The progressive
 - One-off solutions
 - Standard practices documented elsewhere
 - Project-specific conventions (use `AGENTS.md` or a service-level `doc/`)
-- Mechanically enforceable rules at ship time (use the `verify-before-ship` extension from `pi-superpowers` — runtime enforcement beats documentation). Note: only ship-command verification is mechanised today; TDD, debug, and phase enforcement are skill-only.
+- Mechanically enforceable rules at ship time (use the `verify-before-ship` extension from `pi-gauntlet` — runtime enforcement beats documentation). Note: only ship-command verification is mechanised today; TDD, debug, and phase enforcement are skill-only.
 
 ## SKILL.md Structure
 
@@ -178,10 +178,10 @@ If a skill leans on pi capabilities, name them explicitly:
 
 | Capability | How to reference it |
 |---|---|
-| Plan/phase persistence | `plan_tracker` tool (provided by the `pi-superpowers` package's `plan-tracker` extension) |
+| Plan/phase persistence | `plan_tracker` tool (provided by the `pi-gauntlet` package's `plan-tracker` extension) |
 | Progressive disclosure | Direct `read` of `reference/<topic>.md` paths named inline in SKILL.md |
-| Runtime enforcement | `verify-before-ship` extension from `pi-superpowers` (advisory warning before `git commit` / `git push` / `gh pr create` when no canonical verification command has succeeded since the last source edit) |
-| Subagent dispatch | `subagent` tool from `pi-subagents`; baseline subagents from `pi-superpowers` are `implementer`, `code-reviewer`, `spec-reviewer`, `conformance-reviewer`. Consumer repos can add project-specific subagents under `.pi/agents/`. |
+| Runtime enforcement | `verify-before-ship` extension from `pi-gauntlet` (advisory warning before `git commit` / `git push` / `gh pr create` when no canonical verification command has succeeded since the last source edit) |
+| Subagent dispatch | `subagent` tool from `pi-cohort`; baseline subagents from `pi-gauntlet` are `implementer`, `code-reviewer`, `spec-reviewer`, `conformance-reviewer`. Consumer repos can add project-specific subagents under `.pi/agents/`. |
 
 Don't invent capabilities. Don't reference Claude Code's `Task` tool, OpenCode hooks, or Codex `spawn_agent` unless the skill is explicitly for that harness.
 
@@ -374,7 +374,7 @@ Use `plan_tracker` to create tasks for each item:
 **Pi-specific**
 - [ ] If discipline skill *and* the rule is mechanically detectable at a tool boundary: consider an `extensions/*.ts` hook (high bar — runtime hooks are deliberately slim; only add ones that beat false-positive heuristics)
 - [ ] If skill has >500 lines: split deep content into `reference/<topic>.md` and instruct the agent to read the specific file inline
-- [ ] Skill location: project-scoped lives under `.pi/skills/`; cross-harness skills shared with Claude Code under `.agents/skills/`; reusable workflow skills belong in a package like `pi-superpowers`
+- [ ] Skill location: project-scoped lives under `.pi/skills/`; cross-harness skills shared with Claude Code under `.agents/skills/`; reusable workflow skills belong in a package like `pi-gauntlet`
 - [ ] Update routing: link from `AGENTS.md` if cross-cutting
 
 **Deployment**
@@ -426,4 +426,4 @@ If you follow TDD for code, follow it for skills.
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

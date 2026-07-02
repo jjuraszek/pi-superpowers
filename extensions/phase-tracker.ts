@@ -33,7 +33,7 @@ interface PhaseTrackerDetails {
 }
 
 type Settings = {
-  piSuperpowers?: {
+  piGauntlet?: {
     closureReview?: {
       enforce?: boolean;
       model?: string;
@@ -46,7 +46,7 @@ type Settings = {
 };
 
 // Qualification per spec "Qualifying dispatch": a successful conformance-reviewer
-// child run in the result details (pi-subagents SingleResult: { agent, exitCode }).
+// child run in the result details (pi-cohort SingleResult: { agent, exitCode }).
 // Management mode and async dispatches return results: [] and fail this check.
 const qualifiesAsClosureDispatch = (details: unknown): boolean => {
   const d = details as { results?: { agent?: unknown; exitCode?: unknown }[] } | undefined;
@@ -59,7 +59,7 @@ const CLOSURE_GATE_ERROR =
   "The closing loop is required before verify completes. Either:\n" +
   '- dispatch subagent({ agent: "conformance-reviewer", ... }) with the spec, the\n' +
   "  user's verbatim request, and the full diff (model from\n" +
-  "  piSuperpowers.closureReview.model), then complete verify after its verdict, or\n" +
+  "  piGauntlet.closureReview.model), then complete verify after its verdict, or\n" +
   "- if the user explicitly waived closure review, record it:\n" +
   '  phase_tracker({ action: "skip", phase: "verify", reason: "<user waiver>" })';
 
@@ -71,7 +71,7 @@ const SHIP_ADVISORY =
   "still open, you should not have completed verify - reopen it and surface the open\n" +
   "decision instead.";
 
-// --- Flow guards (spec 2026-06-17-superpowers-flow-guards) ---
+// --- Flow guards (spec 2026-06-17-gauntlet-flow-guards) ---
 
 const GUARD_PHASES: Phase[] = ["brainstorm", "plan", "implement"];
 
@@ -93,11 +93,11 @@ const SCRATCH_MENTION = /\/tmp\/|\/var\/folders\/|\/dev\//;
 
 const branchBlockReason = (phase: Phase): string =>
   `Branch switch/creation in the primary checkout is blocked during the ${phase} phase. ` +
-  "Superpowers flows run in a dedicated worktree (git worktree add ... is allowed here); " +
+  "Gauntlet flows run in a dedicated worktree (git worktree add ... is allowed here); " +
   "create/enter one with /skill:using-git-worktrees and run this there. " +
-  "To override, set piSuperpowers.flowGuards.enforce: false.";
+  "To override, set piGauntlet.flowGuards.enforce: false.";
 
-// Closure-review model guard: when piSuperpowers.closureReview.model is configured,
+// Closure-review model guard: when piGauntlet.closureReview.model is configured,
 // a conformance-reviewer dispatch MUST inject that model call-site. The persona ships
 // model-free, so a bare omission silently inherits the parent session's builder model -
 // defeating the point of an independent closing gate on a different model. Walk the
@@ -123,13 +123,13 @@ const conformanceEntriesMissingModel = (input: unknown): boolean => {
 
 const closureModelBlockReason = (model: string): string =>
   `Blocked: conformance-reviewer dispatched without a model while ` +
-  `piSuperpowers.closureReview.model is set to "${model}".\n` +
+  `piGauntlet.closureReview.model is set to "${model}".\n` +
   `The persona ships model-free, so a bare omission silently inherits this session's ` +
   `builder model - the closing gate would then run on the same model that built the work, ` +
   `not the independent one the preset pins. Re-dispatch with model: "${model}" injected ` +
   `call-site. If that model is unreachable, pass an explicit fallback model (the documented ` +
   `one-retry escape hatch) - only a bare omission is blocked.\n` +
-  `To disable this gate, set piSuperpowers.closureReview.enforce: false.`;
+  `To disable this gate, set piGauntlet.closureReview.enforce: false.`;
 
 const brainstormWriteWarning = (specDirs: string[]): string =>
   "⚠️ Writing outside the spec directory during the brainstorm phase.\n" +
@@ -217,11 +217,11 @@ export default function (pi: ExtensionAPI) {
   let phases: PhaseMap = emptyPhases();
   let conformanceDispatched = false;
   const closureEnforced = () =>
-    ((pi.settings ?? {}) as Settings).piSuperpowers?.closureReview?.enforce !== false;
+    ((pi.settings ?? {}) as Settings).piGauntlet?.closureReview?.enforce !== false;
   const closureReviewModel = () =>
-    ((pi.settings ?? {}) as Settings).piSuperpowers?.closureReview?.model;
+    ((pi.settings ?? {}) as Settings).piGauntlet?.closureReview?.model;
 
-  const flowGuardsCfg = () => ((pi.settings ?? {}) as Settings).piSuperpowers?.flowGuards ?? {};
+  const flowGuardsCfg = () => ((pi.settings ?? {}) as Settings).piGauntlet?.flowGuards ?? {};
   const flowGuardsEnforced = () => flowGuardsCfg().enforce !== false;
   const specDirs = () => flowGuardsCfg().specDirs ?? ["doc/specs"];
 
@@ -237,7 +237,7 @@ export default function (pi: ExtensionAPI) {
   // Guard 2 is active only when pi was launched in the primary checkout, not a
   // linked worktree. Computed once: a linked worktree has --git-dir != --git-common-dir.
   // (Inside a submodule the comparison is git-version-dependent and irrelevant here -
-  // superpowers flows do not run inside submodule git internals; whichever way it
+  // gauntlet flows do not run inside submodule git internals; whichever way it
   // resolves, the guard merely staying off in that edge case is harmless.)
   const inPrimaryCheckout = (() => {
     try {
@@ -257,7 +257,7 @@ export default function (pi: ExtensionAPI) {
   // Auto-complete the implement phase from plan_tracker once every task is done,
   // but only when a skill has explicitly started it (TDD, or the SDD
   // execution preamble). The tracker never *fabricates* implement from task activity:
-  // outside a superpowers flow (ad-hoc plan_tracker use) no phase is ever started, so
+  // outside a gauntlet flow (ad-hoc plan_tracker use) no phase is ever started, so
   // the phase widget stays dormant. Phases are entered explicitly by the phase-owning
   // skills; plan-tracker tracks tasks independently.
   const applyPlanActivity = (tasks?: { status: string }[]) => {

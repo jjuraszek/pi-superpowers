@@ -87,7 +87,7 @@ Pi-subagents accepts a per-task `model` override. Use it.
 | Spec review | Default | Reads diff + spec, mechanical comparison |
 | Code-quality review | Most capable | Judgment call on naming, design, complexity |
 | Final reviewer | Most capable | Whole-PR-scope review |
-| Conformance / closure | Most capable | Whole-deliverable-vs-origin intent gate (`conformance-reviewer`; model from `piSuperpowers.closureReview.model`, injected call-site) |
+| Conformance / closure | Most capable | Whole-deliverable-vs-origin intent gate (`conformance-reviewer`; model from `piGauntlet.closureReview.model`, injected call-site) |
 
 ```ts
 subagent({
@@ -112,8 +112,8 @@ subagent({ agent: "spec-reviewer", task: "<diff range + spec excerpt + ask: does
 subagent({ agent: "code-reviewer", task: "<diff range + ask: production-ready?>" })
 
 // closing-loop conformance (origin vs deliverable) — its OWN dispatch, never fused with code quality
-// model from piSuperpowers.closureReview.model (read $PI_CODING_AGENT_DIR/settings.json); omit to inherit
-subagent({ agent: "conformance-reviewer", model: /* piSuperpowers.closureReview.model from config, else omit to inherit */, task: "<spec path + verbatim original prompt + full diff vs main; per conformance-check.md>" })
+// model from piGauntlet.closureReview.model (read $PI_CODING_AGENT_DIR/settings.json); omit to inherit
+subagent({ agent: "conformance-reviewer", model: /* piGauntlet.closureReview.model from config, else omit to inherit */, task: "<spec path + verbatim original prompt + full diff vs main; per conformance-check.md>" })
 ```
 
 Prompt templates live alongside this SKILL.md:
@@ -151,9 +151,9 @@ Auto-selected at handoff by `writing-plans` (any wave with ≥2 tasks) when the 
 
 **Dependent context across waves:** wave N+1 tasks branch from a HEAD containing wave N, so they see the code; still forward wave N's task summaries into wave N+1 prompts.
 
-**Caveat:** each task must be independently runnable and verifiable in a fresh worktree — no reliance on uncommitted local state. `pi-subagents` symlinks `node_modules`; repos needing other per-worktree setup must account for it.
+**Caveat:** each task must be independently runnable and verifiable in a fresh worktree — no reliance on uncommitted local state. `pi-cohort` symlinks `node_modules`; repos needing other per-worktree setup must account for it.
 
-**Set `cwd` to your worktree — resilience-critical.** This whole workflow runs *inside* a worktree, but the `subagent` tool resolves the worktree base from the **top-level `cwd`**, which defaults to the orchestrator's process cwd — the *primary* checkout (usually `main`), not the worktree. Omit `cwd` and `worktree: true` branches every child from the primary checkout's HEAD: the children never see your spec, plan, or prior-wave commits, and integration runs against the wrong baseline. Pass the worktree's absolute path as the top-level `cwd`. Do **not** set per-task `cwd` under `worktree: true` — pi-subagents requires it to equal the shared cwd and errors otherwise. (Clean-tree is enforced here too — `resolveRepoState` rejects a dirty tree — which is why each wave commits before the next.)
+**Set `cwd` to your worktree — resilience-critical.** This whole workflow runs *inside* a worktree, but the `subagent` tool resolves the worktree base from the **top-level `cwd`**, which defaults to the orchestrator's process cwd — the *primary* checkout (usually `main`), not the worktree. Omit `cwd` and `worktree: true` branches every child from the primary checkout's HEAD: the children never see your spec, plan, or prior-wave commits, and integration runs against the wrong baseline. Pass the worktree's absolute path as the top-level `cwd`. Do **not** set per-task `cwd` under `worktree: true` — pi-cohort requires it to equal the shared cwd and errors otherwise. (Clean-tree is enforced here too — `resolveRepoState` rejects a dirty tree — which is why each wave commits before the next.)
 
 ```ts
 subagent({
@@ -190,7 +190,7 @@ For the fan-out + worktree + patch-integration + conflict mechanics, see `dispat
 0. Call `phase_tracker({ action: "start", phase: "verify" })`. (The `implement` phase was started at execution start and auto-completes from `plan_tracker` once all tasks are done; this flow runs its own verify gate instead of `/skill:verification-before-completion`, so it must mark verify itself.)
 1. Dispatch the final reviewer over the full diff (already covered in [The Process](#the-process) step "After all tasks").
 2. **Run an audit pass automatically.** Run `/skill:requesting-code-review` against the worktree's full diff vs `main`. Then, if the project ships a project-specific audit skill (e.g., `.agents/skills/self-audit/`), run it as an optional supplement (it adds project-specific checks and fixes, not a replacement). Address Critical and Moderate findings before handoff. Do not ask the user — just run it.
-3. **Close the loop — conformance check.** The audit in step 2 is plan-vs-code (single-step); it inherits any requirement the plan already dropped. Before marking verify complete, dispatch a fresh-context **`conformance-reviewer`** — its **own** dispatch, never fused into the step-1 final review — to confront the deliverable (code **and** docs) against the *origin* — the spec **and** the original prompt — per `verification-before-completion/reference/conformance-check.md`. Pass the spec path, the verbatim original prompt, and the full diff. On `GAPS`, do not auto-fix or auto-proceed: run the remediation loop in `verification-before-completion/reference/conformance-check.md` "When the check finds gaps" (disposition menu → isolated fix waves → bounded delta re-audit, capped by `piSuperpowers.closureReview.maxFixRounds`). Only when the verdict is `CONFORMS` (or every gap is dispositioned) call `phase_tracker({ action: "complete", phase: "verify" })`.
+3. **Close the loop — conformance check.** The audit in step 2 is plan-vs-code (single-step); it inherits any requirement the plan already dropped. Before marking verify complete, dispatch a fresh-context **`conformance-reviewer`** — its **own** dispatch, never fused into the step-1 final review — to confront the deliverable (code **and** docs) against the *origin* — the spec **and** the original prompt — per `verification-before-completion/reference/conformance-check.md`. Pass the spec path, the verbatim original prompt, and the full diff. On `GAPS`, do not auto-fix or auto-proceed: run the remediation loop in `verification-before-completion/reference/conformance-check.md` "When the check finds gaps" (disposition menu → isolated fix waves → bounded delta re-audit, capped by `piGauntlet.closureReview.maxFixRounds`). Only when the verdict is `CONFORMS` (or every gap is dispositioned) call `phase_tracker({ action: "complete", phase: "verify" })`.
 4. Summarize what was implemented (tasks completed, files changed, test counts, self-audit verdict). Give the closing loop its **own section** — `Closure / conformance: CONFORMS` (or `GAPS` with each gap and its disposition) — so the user sees intent-fidelity as a first-class line before any finishing decision, not buried in the audit verdict.
 5. **Proceed to finishing — no confirmation prompt.** When the verdict is `CONFORMS` (or every gap is dispositioned), invoke `/skill:finishing-a-development-branch` immediately. Its Step 4 menu (squash / PR / keep / discard) is the human gate; a separate "ready to finish?" prompt only stacks a second stop in front of it. Open gaps are already owned by step 3, so nothing is left to decide here. Manual testing is a follow-up after the finishing choice (on `<base-branch>` after a squash-merge, or on the PR branch), never a reason to hold this gate.
 
@@ -220,4 +220,4 @@ For the fan-out + worktree + patch-integration + conflict mechanics, see `dispat
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

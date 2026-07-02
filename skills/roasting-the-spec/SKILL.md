@@ -1,6 +1,6 @@
 ---
 name: roasting-the-spec
-description: Use after writing a spec, when a spec council is configured (piSuperpowers.specCouncil in the repo's .pi/settings.json, else the active preset's settings). Auto-dispatched by /skill:brainstorming as the critique pass when members is non-empty (no longer offered). N members on different models critique in parallel, a neutral chair consolidates and adjudicates, the parent proposes dispositions, the user approves.
+description: Use after writing a spec, when a spec council is configured (piGauntlet.specCouncil in the repo's .pi/settings.json, else the active preset's settings). Auto-dispatched by /skill:brainstorming as the critique pass when members is non-empty (no longer offered). N members on different models critique in parallel, a neutral chair consolidates and adjudicates, the parent proposes dispositions, the user approves.
 ---
 
 # Roasting the Spec (Spec Council)
@@ -24,7 +24,7 @@ This skill may read anything and edit **only** the spec under `doc/specs/`. It d
 
 ## Configuration and gating
 
-Resolve `piSuperpowers.specCouncil` from **two** settings files, repo-local first:
+Resolve `piGauntlet.specCouncil` from **two** settings files, repo-local first:
 
 1. `<repo-root>/.pi/settings.json` (repo root = `git rev-parse --show-toplevel`, which inside a worktree is the worktree root). **If this file defines `specCouncil`, it wins** — even an empty `members` here is an explicit "no council for this repo".
 2. `$PI_CODING_AGENT_DIR/settings.json` (agent preset) — consulted **only** when the repo file does not define `specCouncil` at all.
@@ -33,7 +33,7 @@ The first file that defines the key wins; do not merge member lists across files
 
 ```json
 {
-  "piSuperpowers": {
+  "piGauntlet": {
     "specCouncil": {
       "members": ["<provider/model>", "<provider/model>"],
       "chair": "<provider/model>"
@@ -127,7 +127,7 @@ Single pass — no automatic re-roast loop. The user can invoke this skill again
 
 ## Red flags — STOP
 
-- Running the council when `piSuperpowers.specCouncil.members` is absent or empty (brainstorming owns the gate and should have used the worker fallback).
+- Running the council when `piGauntlet.specCouncil.members` is absent or empty (brainstorming owns the gate and should have used the worker fallback).
 - Reading member critique files yourself instead of routing them through the chair.
 - Writing member files to a relative path (they land in the worktree).
 - Auto-applying findings without the user gate.
@@ -136,4 +136,4 @@ Single pass — no automatic re-roast loop. The user can invoke this skill again
 
 ## Project overrides
 
-If `.pi/superpowers-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.
+If `.pi/gauntlet-overrides.md` exists, read it. Any sections relevant to this skill — by name match, by topic (routing, verification, worktrees, etc.), or by workflow convention — override or extend the instructions above. Project-local `AGENTS.md` is already in context — check it for project-specific routing tables, service paths, and verification commands.

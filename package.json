@@ -1,19 +1,24 @@
 {
-  "name": "@jjuraszek/pi-superpowers",
-  "version": "3.5.0",
-  "description": "Workflow skills, agent personas, and extensions for the pi coding agent. Inspired by obra/superpowers.",
+  "name": "pi-gauntlet",
+  "version": "4.0.0",
+  "description": "Opinionated, gated workflow skills, subagent personas, and runtime extensions for the pi coding agent.",
   "type": "module",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/jjuraszek/pi-superpowers.git"
+    "url": "git+https://github.com/jjuraszek/pi-gauntlet.git"
+  },
+  "homepage": "https://github.com/jjuraszek/pi-gauntlet#readme",
+  "bugs": {
+    "url": "https://github.com/jjuraszek/pi-gauntlet/issues"
   },
   "keywords": [
+    "pi-package",
     "pi",
     "pi-coding-agent",
-    "superpowers",
     "skills",
-    "agents"
+    "agents",
+    "workflow"
   ],
   "pi": {
     "skills": [

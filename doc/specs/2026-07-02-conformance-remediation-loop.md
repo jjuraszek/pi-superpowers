@@ -4,7 +4,7 @@
 
 The conformance gate (`conformance-reviewer` dispatched by `verification-before-completion` /
 `subagent-driven-development` verify step / `finishing-a-development-branch`) is a strong
-detector but a weak closer. Measured across 58 unique gridstrong full-flow sessions (71
+detector but a weak closer. Measured across 58 unique consumer-project full-flow sessions (71
 `conformance-reviewer` dispatches, deduped across preset dirs):
 
 - **50% gap rate** - 29/58 first verdicts were `GAPS`. The gate earns its keep.
@@ -168,7 +168,7 @@ Disposition semantics:
 ```
 
 **Commit timing.** `accept`/`rescope` spec edits are committed **before** any fix wave dispatches:
-pi-subagents rejects a dirty tree on a `worktree: true` dispatch, and the re-audit must read the
+pi-cohort rejects a dirty tree on a `worktree: true` dispatch, and the re-audit must read the
 amended spec as its origin. If a round has only `accept`/`rescope` dispositions and no `fix`, the
 spec edits land, the verdict is recorded, and no re-audit runs (nothing was fixed).
 
@@ -251,18 +251,18 @@ appears in the fix diff**. Gap ID continuity: it reuses `G1..Gn`, marking each `
 surfaced gap.
 
 - The re-audit dispatch carries the **same call-site `model:` injection** as the initial audit:
-  when `piSuperpowers.closureReview.model` is set, `extensions/phase-tracker.ts`'s closure guard
+  when `piGauntlet.closureReview.model` is set, `extensions/phase-tracker.ts`'s closure guard
   requires every `conformance-reviewer` dispatch to specify `model:`, and the re-audit is a second
   such dispatch.
 - New or still-open gaps within the cap re-enter the menu (Section 2).
 - **Cap: 2 fix rounds (3 audits total)**, read from
-  `settings.json#piSuperpowers.closureReview.maxFixRounds` (default `2`; see Section 5).
+  `settings.json#piGauntlet.closureReview.maxFixRounds` (default `2`; see Section 5).
 - **On non-convergence** (cap reached with open gaps): **escalate to human** with the per-gap
   history - a round-by-round verdict trail per gap ID. No silent re-loop, no auto-ship.
 
 ### 5. Config
 
-New key: `piSuperpowers.closureReview.maxFixRounds` (integer, default `2`), alongside the existing
+New key: `piGauntlet.closureReview.maxFixRounds` (integer, default `2`), alongside the existing
 `closureReview.model` / `closureReview.enforce`. It is read by `conformance-check.md`'s loop-control
 **prose** (the orchestrator reads settings directly at the gate); it is **not** wired into the
 `phase-tracker.ts` extension - the cap is enforced by the protocol, not by a new extension gate
@@ -281,7 +281,7 @@ New key: `piSuperpowers.closureReview.maxFixRounds` (integer, default `2`), alon
 | `skills/verification-before-completion/reference/conformance-check.md` | Replace the "When the check finds gaps" section (lines 80-95) with the full protocol: enumerated numbered menu + apply-all-recommended default (with accept/rescope confirmation), dated-decision template + commit timing, fix dispatch via `dispatching-parallel-agents` mechanics + inline dispatch shape + inherited failure handling, delta re-audit with full-report payload + model injection, cap + escalation, config read/validation. |
 | `skills/subagent-driven-development/SKILL.md` | Verify step "After All Tasks" step 3: **replace** its inline disposition bullets (fix now / accept / rescope) with a pointer to the protocol. No Parallel-Wave-Mode edits. |
 | `skills/finishing-a-development-branch/SKILL.md` | Conformance step: **replace** its inline disposition bullets with a pointer to the protocol; note the non-worktree/detached-HEAD menu restriction. |
-| `README.md` | Document `piSuperpowers.closureReview.maxFixRounds`. |
+| `README.md` | Document `piGauntlet.closureReview.maxFixRounds`. |
 | `CHANGELOG.md` | Entry (minor - extends closureReview config + skill/agent behavior). |
 
 ## Documentation impact
